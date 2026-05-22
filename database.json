@@ -1,0 +1,23 @@
+[
+    {
+        "unit_number": "10A",
+        "property_manager": "Matt Franqui",
+        "tenant_name": "John Doe",
+        "move_in_date": "2026-05-22",
+        "move_out_date": "2026-11-20"
+    },
+    {
+        "unit_number": "14B",
+        "property_manager": "Sarah Jenkins",
+        "tenant_name": "Jane Smith",
+        "move_in_date": "2026-05-22",
+        "move_out_date": "2027-05-22"
+    },
+    {
+        "unit_number": "56D",
+        "property_manager": "John Grant",
+        "tenant_name": "Beverly Hills",
+        "move_in_date": "2026-05-22",
+        "move_out_date": "2026-07-28"
+    }
+]
