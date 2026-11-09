@@ -1,0 +1,1439 @@
+<title>Count of Ten</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=IBM+Plex+Sans+Condensed:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow stage. The ring (or the week planner) is the hero; the body chart and corner card sit beside it like a cutman's clipboard. Deliberately single-theme: a night gym under sodium light. */
+:root{
+  --ink:#15131d; --ink2:#1e1b2a; --panel:#262233; --line:#3b3550;
+  --canvas:#ece3cf; --dim:#a49cb2; --blood:#d4432f; --gold:#e7aa3d; --bruise:#9479c4; --ok:#73c27a;
+  --f-display:'Silkscreen','Courier New',monospace;
+  --f-body:'IBM Plex Sans Condensed','Arial Narrow',Arial,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--ink);color:var(--canvas)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45;margin:0}
+#app{max-width:1080px;margin:0 auto;padding-block:12px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.02em}
+h1{font-size:clamp(28px,6vw,52px);line-height:1}
+h2{font-size:20px}
+h3{font-size:13px;color:var(--gold);text-transform:uppercase;letter-spacing:.08em}
+p{margin:0}
+.dim{color:var(--dim)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;border-bottom:2px solid var(--line);padding-bottom:10px}
+.bar .brand{font-family:var(--f-display);font-size:16px;color:var(--gold)}
+.bar .stats{display:flex;flex-wrap:wrap;gap:6px 14px;font-family:var(--f-mono);font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px}
+@media (max-width:820px){.grid2{grid-template-columns:minmax(0,1fr)}}
+button,.btn{font-family:var(--f-display);font-size:12px;background:var(--ink2);color:var(--canvas);border:2px solid var(--line);padding:8px 10px;cursor:pointer;text-align:left;line-height:1.2}
+button:hover:not(:disabled){border-color:var(--gold)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.38;cursor:not-allowed}
+button.primary{background:var(--blood);border-color:var(--blood);color:#fff}
+button.primary:hover:not(:disabled){border-color:var(--gold)}
+button.sel{border-color:var(--gold);background:#3a2f22}
+select,input[type=text]{font-family:var(--f-body);font-size:14px;background:var(--ink2);color:var(--canvas);border:1px solid var(--line);padding:5px 6px;min-width:0;width:100%}
+input[type=range]{width:100%;accent-color:var(--gold)}
+label{font-size:13px;color:var(--dim);display:flex;flex-direction:column;gap:4px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.swatch{width:28px;height:28px;padding:0;border:2px solid var(--line)}
+.swatch.sel{border-color:var(--gold);outline:2px solid var(--gold)}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block;width:100%;height:auto;max-width:100%}
+.meter{display:grid;grid-template-columns:92px minmax(0,1fr) 38px;gap:8px;align-items:center;font-size:13px}
+.meter .track{height:8px;background:var(--ink2);border:1px solid var(--line);position:relative}
+.meter .fill{position:absolute;inset:0 auto 0 0;background:var(--gold)}
+.meter .v{font-family:var(--f-mono);font-size:12px;text-align:right;color:var(--dim)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{font-size:10px;padding:5px 7px}
+/* Title */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:center}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.hero .lede{font-size:17px;max-width:58ch}
+.tag{font-family:var(--f-display);font-size:11px;color:var(--blood);letter-spacing:.1em}
+/* Planner */
+.plan{display:flex;flex-direction:column;gap:6px}
+.day{display:grid;grid-template-columns:44px repeat(4,minmax(0,1fr));gap:6px;align-items:center}
+.day .dn{font-family:var(--f-display);font-size:12px;color:var(--gold)}
+.slothead{display:grid;grid-template-columns:44px repeat(4,minmax(0,1fr));gap:6px;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+@media (max-width:560px){.day{grid-template-columns:34px repeat(2,minmax(0,1fr))}.day .dn{grid-row:span 2}.slothead{display:none}}
+.log{font-family:var(--f-mono);font-size:12.5px;max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:3px;background:var(--ink2);padding:10px;border:1px solid var(--line)}
+.log .d{color:var(--gold)}
+.log .bad{color:#f08a7a}
+.log .good{color:var(--ok)}
+.person{display:grid;grid-template-columns:minmax(0,1fr) 90px;gap:6px;align-items:center;font-size:13.5px}
+.person .track{height:6px;background:var(--ink2);border:1px solid var(--line);position:relative}
+.person .fill{position:absolute;inset:0 auto 0 0;background:var(--bruise)}
+/* Fight */
+.stage{position:relative;border:2px solid var(--line);background:#0c0b12}
+.hud{position:absolute;inset:0 0 auto 0;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;padding:6px 8px;pointer-events:none;font-family:var(--f-display);font-size:10px}
+.hud .side{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hud .side.r{align-items:flex-end;text-align:right}
+.hud .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-shadow:1px 1px 0 #000}
+.hb{width:min(170px,100%);height:6px;background:rgba(0,0,0,.6);border:1px solid #000;position:relative}
+.hb i{position:absolute;inset:0 auto 0 0}
+.side.r .hb i{inset:0 0 0 auto}
+.clock{text-align:center;font-size:14px;text-shadow:1px 1px 0 #000;color:var(--gold)}
+.banner{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-family:var(--f-display);font-size:clamp(18px,4vw,34px);color:#fff;text-shadow:3px 3px 0 var(--blood);pointer-events:none;white-space:nowrap}
+.read{background:var(--ink2);border:1px solid var(--line);border-left:4px solid var(--gold);padding:8px 10px;font-size:14.5px}
+.read b{font-family:var(--f-display);font-size:11px;color:var(--gold);font-weight:400;margin-right:6px}
+.pad{display:flex;flex-direction:column;gap:8px}
+.pad .grp{display:flex;flex-direction:column;gap:4px}
+.pad .grp>span{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.pad .btns{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:5px}
+.pad button{font-size:10.5px;padding:7px 6px;display:flex;justify-content:space-between;gap:4px}
+.pad button kbd{font-family:var(--f-mono);color:var(--dim);font-size:10px}
+.pad button.far{border-style:dashed;opacity:.62}
+.combo-q{font-family:var(--f-mono);font-size:12px;color:var(--gold)}
+/* Modal */
+#modal{position:fixed;inset:0;background:rgba(8,7,12,.82);display:flex;align-items:center;justify-content:center;padding:20px max(16px,env(safe-area-inset-right,0px)) 20px max(16px,env(safe-area-inset-left,0px));z-index:50}
+#modal .box{background:var(--panel);border:2px solid var(--gold);max-width:620px;width:100%;max-height:90vh;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+#modal .scene{font-size:16px;line-height:1.55}
+#modal .speaker{font-family:var(--f-display);color:var(--gold);font-size:12px}
+.choices{display:flex;flex-direction:column;gap:6px}
+.count{font-family:var(--f-display);font-size:64px;color:#fff;text-align:center;text-shadow:4px 4px 0 var(--blood);line-height:1}
+.mem{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
+.mem button{display:flex;flex-direction:column;gap:4px;font-size:11px}
+.mem button small{font-family:var(--f-body);font-size:12.5px;color:var(--dim)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
+.cards button{display:flex;flex-direction:column;gap:4px}
+.cards button small{font-family:var(--f-body);font-size:12.5px;color:var(--dim);line-height:1.35}
+table.score{border-collapse:collapse;font-family:var(--f-mono);font-size:13px;width:100%}
+table.score td,table.score th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:center}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;font-size:12px;font-family:var(--f-mono)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app">
+  <div class="bar"><span class="brand">COUNT OF TEN</span><div class="stats" id="topstats"></div></div>
+  <main id="view"></main>
+</div>
+<div id="modal" hidden><div class="box" id="modalbox"></div></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   COUNT OF TEN — turn-based boxing + life sim vertical slice
+   One turn = one second. Hitboxes are tested point-by-point against the
+   defender's pose; damage lands on bones, muscles and organs.
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const lerp=(a,b,t)=>a+(b-a)*t;
+const r1=v=>Math.round(v*10)/10;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------------------- STYLES ---------------------------- */
+const STYLES={
+  swarmer:{name:'Swarmer',blurb:'Pressure. Bob under the hook, live in the pocket, dig the body.',range:0,
+    mods:{hook:1.12,body:1.12,exec:{duck:.12},weaveHook:1.6},sig:'A hook thrown right after a successful duck lands 60% harder.'},
+  outboxer:{name:'Out-boxer',blurb:'Long jab, clean feet. Make them miss from outside, make them pay.',range:2,
+    mods:{long:1.22,outFree:true,exec:{pull:.12}},sig:'Straights at long range +22%. Stepping out costs nothing.'},
+  counter:{name:'Counter-puncher',blurb:'Wait. Read. Punish. You win the second after they commit.',range:1,
+    mods:{counter:1.75,read:.12,exec:{slip:.1}},sig:'Counters land 75% harder (others get 40%). Sharper reads.'},
+  slugger:{name:'Slugger',blurb:'One clean shot changes everything. Heavy hands, granite chin, slow feet.',range:1,
+    mods:{power:1.15,over:1.25,chin:12,speed:1.12},sig:'Overhand +25%, power +15%, chin +12. Hands are slower.'},
+  peekaboo:{name:'Peek-a-boo',blurb:'Gloves high, head moving, explode from the crouch with uppercuts.',range:0,
+    mods:{upper:1.18,tightGuard:true,exec:{slip:.08,duck:.08}},sig:'Tighter high guard. Uppercuts +18%.'},
+};
+
+/* ---------------------------- TECHNIQUES ----------------------------
+   ranges: 0 = inside, 1 = mid, 2 = long. speed: seconds-fraction (lower is faster) */
+const TECH={
+  jab:{n:'Jab',kind:'punch',type:'straight',target:'head',hand:'lead',ranges:[1,2],speed:1.0,power:4,cost:2,skill:'straight',key:'1'},
+  cross:{n:'Cross',kind:'punch',type:'straight',target:'head',hand:'rear',ranges:[1,2],speed:1.6,power:9,cost:4,skill:'straight',key:'2'},
+  hook:{n:'Lead Hook',kind:'punch',type:'hook',target:'head',hand:'lead',ranges:[0,1],speed:1.7,power:10,cost:5,skill:'hook',key:'3'},
+  upper:{n:'Uppercut',kind:'punch',type:'upper',target:'head',hand:'rear',ranges:[0],speed:1.8,power:11,cost:5,skill:'upper',key:'4'},
+  overhand:{n:'Overhand',kind:'punch',type:'overhand',target:'head',hand:'rear',ranges:[1,2],speed:2.3,power:14,cost:7,skill:'straight',key:'5'},
+  bjab:{n:'Body Jab',kind:'punch',type:'straight',target:'body',hand:'lead',ranges:[1,2],speed:1.1,power:4,cost:2,skill:'body',key:'6'},
+  bcross:{n:'Body Cross',kind:'punch',type:'straight',target:'body',hand:'rear',ranges:[1],speed:1.6,power:8,cost:4,skill:'body',key:'7'},
+  liver:{n:'Liver Hook',kind:'punch',type:'hook',target:'body',hand:'lead',ranges:[0,1],speed:1.8,power:9,cost:5,skill:'body',key:'8'},
+  high:{n:'High Guard',kind:'def',cost:.5,key:'q'},
+  low:{n:'Elbows Down',kind:'def',cost:.5,key:'w'},
+  slip:{n:'Slip',kind:'def',cost:1.5,key:'e'},
+  duck:{n:'Duck & Weave',kind:'def',cost:2,key:'r'},
+  pull:{n:'Pull Back',kind:'def',cost:1,key:'t'},
+  clinch:{n:'Clinch',kind:'clinch',cost:-1,key:'y'},
+  in:{n:'Step In',kind:'move',cost:1,key:'a'},
+  out:{n:'Step Out',kind:'move',cost:1,key:'s'},
+  circle:{n:'Circle',kind:'move',cost:-2.5,key:'d'},
+  feint:{n:'Feint',kind:'feint',cost:1,key:'f'},
+};
+const PUNCHES=Object.keys(TECH).filter(k=>TECH[k].kind==='punch');
+const ALL_ACTS=Object.keys(TECH);
+const DEFENSIVE=['high','low','slip','duck','pull','clinch'];
+
+/* ---------------------------- HITBOX GEOMETRY ----------------------------
+   Defender frame, seen from the attacker: x is lateral (viewer-left = defender's right side),
+   y runs down from the top of the head. Liver sits on the defender's right (x<0). */
+const HEAD_B=[-8,0,8,18], TORSO_B=[-12,22,12,58];
+const REG_HEAD=[[-2,13,2,18,'chin'],[-2,9,2,13,'nose'],[-5,5,-1,9,'eye'],[1,5,5,9,'eye'],[-8,1,-4,9,'temple'],[4,1,8,9,'temple'],[-8,9,-2,18,'jaw'],[2,9,8,18,'jaw']];
+const REG_BODY=[[-4,32,4,42,'solar'],[-12,42,-3,52,'liver'],[3,42,12,52,'spleen'],[-12,32,-4,42,'ribs'],[4,32,12,42,'ribs'],[-12,22,12,32,'chest']];
+/* Punch impact shapes for an orthodox attacker (mirrored for southpaws). Aimed where the head/body is at rest. */
+const SHAPES={jab:[-3,6,3,16],cross:[-2,6,4,16],hook:[-17,3,1,15],upper:[-3,8,5,38],overhand:[-3,-3,15,9],bjab:[-4,32,4,42],bcross:[-3,32,5,44],liver:[-17,40,-1,52]};
+/* Guards: g = gloves, f = forearms. index 0 = rear hand, 1 = lead hand (orthodox; mirrored for southpaw). */
+const GUARDS={
+  neutral:{g:[[-9,9,-1,17],[1,7,8,15]],f:[[-11,17,-7,30],[7,15,11,28]]},
+  high:{g:[[-7,3,0,16],[0,3,7,16]],f:[[-8,16,-3,34],[3,16,8,34]]},
+  highT:{g:[[-8,2,0,17],[0,2,8,17]],f:[[-9,17,-3,36],[3,17,9,36]]},
+  low:{g:[[-6,30,0,40],[0,30,6,40]],f:[[-13,30,-5,52],[5,30,13,52]]},
+  duck:{g:[[-12,20,-6,30],[6,20,12,30]],f:[]},
+  dropped:{g:[[-12,32,-6,40],[6,32,12,40]],f:[]},
+  clinch:{g:[[-16,24,-10,32],[10,24,16,32]],f:[]},
+};
+const inR=(x,y,r)=>x>=r[0]&&x<r[2]&&y>=r[1]&&y<r[3];
+const mirrorR=r=>[-r[2],r[1],-r[0],r[3],r[4]];
+function regionAt(list,x,y){for(const r of list)if(inR(x,y,r))return r[4];return null}
+
+function poseOf(act,o){
+  const p={hx:0,hy:0,tx:0,ty:0,depth:0,guard:'neutral',gx:0,gy:0,drop:null};
+  const e=o.exec??1, dir=o.attSouthpaw?1:-1; // slip toward the attacker's lead-hook side
+  if(o.frozen||act==='frozen'){p.guard='dropped'}
+  else switch(act){
+    case 'high':p.guard=o.tight?'highT':'high';break;
+    case 'low':p.guard='low';break;
+    case 'slip':p.hx=10*dir*e;p.hy=3*e;p.tx=3*dir*e;p.gx=5*dir*e;break;
+    case 'duck':p.hx=-2*e;p.hy=18*e;p.ty=8*e;p.guard=e>.55?'duck':'neutral';p.gy=e>.55?0:8*e;break;
+    case 'pull':p.depth=e>.55?1:0;p.hy=2;break;
+    case 'clinch':p.guard='clinch';p.hx=6;p.hy=4;break;
+    case 'feint':p.drop='lead';break;
+    default:if(TECH[act]&&TECH[act].kind==='punch')p.drop=TECH[act].hand;
+  }
+  const G=GUARDS[p.guard];
+  let g=G.g.map(r=>[r[0]+p.gx,r[1]+p.gy,r[2]+p.gx,r[3]+p.gy]), f=G.f.map(r=>[r[0]+p.gx,r[1]+p.gy,r[2]+p.gx,r[3]+p.gy]);
+  if(o.defSouthpaw){g=g.map(mirrorR);f=f.map(mirrorR)}
+  if(p.drop){const i=p.drop==='lead'?1:0;g=g.filter((_,k)=>k!==i);if(f.length===2)f=f.filter((_,k)=>k!==i)}
+  p.guards=g.concat(f);
+  return p;
+}
+function hitTest(shape,target,P,reachDepth){
+  let contact=0,blocked=0,cleanN=0;const clean={};
+  for(let x=shape[0];x<shape[2];x++)for(let y=shape[1];y<shape[3];y++){
+    let reg=null;
+    if(target==='head'){const lx=x-P.hx,ly=y-P.hy;if(inR(lx,ly,HEAD_B)&&!(P.depth&&!reachDepth))reg=regionAt(REG_HEAD,lx,ly)||'forehead'}
+    else{const lx=x-P.tx,ly=y-P.ty;if(inR(lx,ly,TORSO_B))reg=regionAt(REG_BODY,lx,ly)||'stomach'}
+    if(!reg)continue;
+    contact++;
+    if(P.guards.some(g=>inR(x,y,g)))blocked++;else{clean[reg]=(clean[reg]||0)+1;cleanN++}
+  }
+  return{contact,blocked,cleanN,clean};
+}
+const N0={};
+for(const k of PUNCHES){const P={hx:0,hy:0,tx:0,ty:0,depth:0,guards:[]};N0[k]=hitTest(SHAPES[k],TECH[k].target,P,true).contact}
+const shapeFor=(k,south)=>south?mirrorR(SHAPES[k]):SHAPES[k];
+
+/* What each region does to the body */
+const REGFX={
+  chin:{shock:1.6,bone:'jaw',lbl:'on the button'},jaw:{shock:1.3,bone:'jaw',lbl:'on the jaw'},
+  temple:{shock:1.25,bone:'skull',lbl:'at the temple'},forehead:{shock:.7,bone:'skull',hand:1.6,lbl:'off the forehead'},
+  eye:{shock:.8,swell:1.3,bone:'orbital',lbl:'over the eye'},nose:{shock:.7,bone:'nose',bleed:1,lbl:'on the nose'},
+  chest:{stam:.6,shock:.1,lbl:'into the chest'},solar:{stam:2.2,wind:.28,lbl:'into the solar plexus'},
+  ribs:{stam:1,bone:'ribs',lbl:'into the ribs'},liver:{stam:1.4,liver:1.25,lbl:'into the liver'},
+  spleen:{stam:1.1,liver:.6,lbl:'under the ribs'},stomach:{stam:1.2,lbl:'into the stomach'},
+};
+
+/* ---------------------------- FIGHTERS ---------------------------- */
+function baseFightState(F){
+  Object.assign(F,{stamina:F.stamMax,shock:0,shockTotal:0,liverLoad:0,liverFuse:0,swell:0,bleed:0,
+    frozen:0,counterReady:false,afterDuck:false,kds:0,limit:0,trueRead:false,resolve:F.resolve||20,
+    bone:Object.assign({skull:0,jaw:0,nose:0,orbital:0,ribs:0,handL:0,handR:0},F.bone||{}),
+    musc:{arms:0,legs:0,core:0},hitLog:{}});
+  return F;
+}
+function fighterFromPlayer(p){
+  const b=p.body,m=b.muscle,o=b.organs,s=p.skills,st=STYLES[p.style].mods;
+  const sleepPen=clamp(p.sleepDebt/25,0,.45), fat=p.fatigue/100, nutr=p.nutrition<40?(40-p.nutrition)/80:0;
+  const F={name:p.name,short:p.name.split(' ')[0],isPlayer:true,style:p.style,southpaw:p.stance==='southpaw',
+    reach:p.height+p.reachAdj,height:p.height,weight:p.weight,look:p.look,iq:s.ringIQ,defense:s.defense,footwork:s.footwork,skills:s,sleepPen};
+  F.powerMult=(.65+(m.arms*.3+m.shoulders*.25+m.core*.25+m.legs*.2)/100*.6+(p.weight-62)/120)*(1-fat*.25)*(st.power||1);
+  F.speedMult=(1.15-s.footwork/400-m.arms/800)*(1+sleepPen*.5)*(st.speed||1);
+  F.chin=(45+m.neck*.35+o.brain*.25+(st.chin||0))*(1-sleepPen*.4)*(b.skel.jaw/100*.3+.7);
+  F.liverMax=30+m.core*.35+o.liver*.05;
+  F.stamMax=Math.round((55+o.heart*.45+o.lungs*.25)*(1-fat*.35-nutr));
+  F.regen=.6+o.heart/90+o.lungs/140;
+  F.boneF=b.skel.density/80;
+  F.bone={skull:100-b.skel.skull,jaw:100-b.skel.jaw,nose:100-b.skel.nose,orbital:100-b.skel.orbital,ribs:100-b.skel.ribs,handL:100-b.skel.handL,handR:100-b.skel.handR};
+  const bonds=Object.values(p.rel).map(r=>r.bond).sort((a,b)=>b-a);
+  F.resolve=clamp(10+(bonds[0]+bonds[1])*.25-p.stress*.15,5,60);
+  return baseFightState(F);
+}
+const OPPS=[
+  {name:'Benny "The Bus" Okafor',short:'Benny',style:'slugger',rec:'2-3 (2 KO)',lvl:0,rounds:3,purse:400,height:176,weight:72,south:false,
+    look:{skin:'#5a3a26',hair:'buzz',hairC:'#141010',trunks:'#2f6d3a',glove:'#b3272a'},blurb:'Club fighter. Walks forward and throws the right hand like he means it.'},
+  {name:'Lalo Reyes',short:'Lalo',style:'counter',rec:'5-1 (1 KO)',lvl:1,rounds:4,purse:700,height:172,weight:70,south:true,
+    look:{skin:'#a8704a',hair:'crop',hairC:'#1d140f',trunks:'#e0c040',glove:'#1c1c1c'},blurb:'Patient southpaw. Lets you lead, then fires back straight down the middle.'},
+  {name:'Tomasz "Hammer" Wróbel',short:'Tomasz',style:'swarmer',rec:'8-2 (6 KO)',lvl:2,rounds:4,purse:1100,height:170,weight:72,south:false,
+    look:{skin:'#e3b896',hair:'bald',hairC:'#000',trunks:'#7a1f2b',glove:'#efefef'},blurb:'Short, wide, relentless. He will put his head on your chest and dig.'},
+  {name:'Dex Calloway',short:'Dex',style:'outboxer',rec:'7-0 (4 KO)',lvl:3,rounds:6,purse:2400,height:184,weight:71,south:false,rival:true,
+    look:{skin:'#c9946a',hair:'pomp',hairC:'#2a1a10',trunks:'#f2f2f2',glove:'#2645a8'},blurb:'Uptown gold-medal prospect. Fast hands, long reach, and he thinks you are a joke.'},
+];
+function genOpp(n){
+  const st=pick(Object.keys(STYLES));const first=pick(['Marco','Isaac','Kenji','Andre','Viktor','Sol','Ray','Tobias','Emeka','Luis']);
+  const last=pick(['Duarte','Mbeki','Halvorsen','Quill','Sato','Brennan','Okoye','Varga','Pike','Moreau']);
+  const lvl=3+Math.floor((n-3)*.7);
+  return{name:first+' '+last,short:first,style:st,rec:`${8+n}-${Math.floor(Math.random()*4)}`,lvl,rounds:6,purse:1500+n*600,height:168+Math.floor(Math.random()*18),weight:70,south:Math.random()<.25,
+    look:{skin:pick(SKINS),hair:pick(['buzz','crop','spiky','bald','tied']),hairC:pick(HAIRC),trunks:pick(TRUNKS),glove:pick(GLOVES)},blurb:'A ranked contender with something to prove.'};
+}
+function oppData(i){return i<OPPS.length?OPPS[i]:genOpp(i)}
+function fighterFromOpp(o){
+  const L=o.lvl, st=STYLES[o.style].mods, v=()=>Math.random()*8-4;
+  const skill=clamp(38+L*12+v(),10,95);
+  const F={name:o.name,short:o.short,isPlayer:false,style:o.style,southpaw:o.south,reach:o.height+(o.rival?6:0),height:o.height,weight:o.weight,look:o.look,
+    iq:clamp(30+L*14+v(),10,95),defense:skill,footwork:skill+(o.style==='outboxer'?10:0),skills:{straight:skill,hook:skill,upper:skill,body:skill,defense:skill,footwork:skill,ringIQ:skill},sleepPen:0};
+  F.powerMult=(.88+L*.07)*(st.power||1);
+  F.speedMult=(1.05-L*.04)*(st.speed||1);
+  F.chin=55+L*8+(st.chin||0)+v();
+  F.liverMax=38+L*6;
+  F.stamMax=Math.round(70+L*10);
+  F.regen=1.1+L*.18;
+  F.boneF=1;F.resolve=20;
+  return baseFightState(F);
+}
+
+/* ---------------------------- EXCHANGE RESOLUTION ---------------------------- */
+function execQ(F,act,rng){
+  const st=STYLES[F.style].mods;
+  let e=.55+F.defense/220+F.footwork/600+((st.exec||{})[act]||0)-F.sleepPen*.5;
+  if(F.stamina<F.stamMax*.2)e-=.18;
+  if(F.limit)e+=.1;
+  if(rng)e+=(rng()-.5)*.3;
+  return clamp(e,.3,1);
+}
+function styleMult(F,k,r){
+  const t=TECH[k],m=STYLES[F.style].mods;let v=1;
+  if(t.type==='hook'&&t.target==='head'&&m.hook)v*=m.hook;
+  if(t.target==='body'&&m.body)v*=m.body;
+  if(t.type==='upper'&&m.upper)v*=m.upper;
+  if(t.type==='overhand'&&m.over)v*=m.over;
+  if(t.type==='straight'&&r===2&&m.long)v*=m.long;
+  if(t.type==='hook'&&F.afterDuck&&m.weaveHook)v*=m.weaveHook;
+  return v;
+}
+function handOf(F,k){const lead=TECH[k].hand==='lead';return (lead!==F.southpaw)?'handL':'handR'}
+function computeExchange(A,a,B,b,st){
+  const sim=!!st.sim, rng=sim?null:Math.random;
+  if(A.frozen>0)a='frozen'; if(B.frozen>0)b='frozen';
+  const r0=st.range, mv=x=>x==='in'?-1:x==='out'?1:0;
+  let r=clamp(r0+mv(a)+mv(b),0,2), clinch=false;
+  if((a==='clinch'||b==='clinch')&&r0<=1){const other=a==='clinch'?b:a;if(other!=='out'){clinch=true;r=0}}
+  const out={range:r,clinch,hits:[],feint:null,evaded:{A:false,B:false},dmgTo:{A:0,B:0},acts:{A:a,B:b}};
+  const isDef=x=>DEFENSIVE.includes(x);
+  if(a==='feint'&&isDef(b))out.feint={by:'A',on:'B'};
+  if(b==='feint'&&isDef(a))out.feint={by:'B',on:'A'};
+  const sides=[['A',A,a,'B',B,b],['B',B,b,'A',A,a]];
+  for(const[id,X,x,yid,Y,y]of sides){
+    const t=TECH[x];if(!t||t.kind!=='punch')continue;
+    const h={att:id,def:yid,tech:x,res:'miss',region:null,dmg:0,mult:0,counter:false,speed:t.speed*X.speedMult,walkIn:false};
+    let decided=false, jam=1;
+    if(clinch){decided=true;if(t.type==='straight'||t.type==='overhand')h.res='smothered';else{h.res='hit';h.mult=t.target==='body'?.6:.35;h.region=t.target==='body'?'ribs':'jaw'}}
+    else if(!t.ranges.includes(r)){if(r<Math.min(...t.ranges))jam=.5;else{h.res='short';decided=true}}
+    if(!decided){
+      const P=poseOf(y,{defSouthpaw:Y.southpaw,attSouthpaw:X.southpaw,exec:sim?execQ(Y,y):execQ(Y,y,rng),frozen:Y.frozen>0,tight:STYLES[Y.style].mods.tightGuard});
+      const reach=X.reach-Y.reach>=6||r===0;
+      const T=hitTest(shapeFor(x,X.southpaw),t.target,P,reach);h.pose=P;
+      const frac=T.contact/N0[x];
+      if(frac<.2)h.res='miss';
+      else{const ratio=T.cleanN/T.contact;
+        if(ratio<.3){h.res='blocked';h.mult=.15}
+        else{h.res='hit';h.mult=Math.min(1,frac*1.5)*Math.pow(ratio,.7)*(frac>1.2?1.3:1)*jam;
+          h.region=Object.entries(T.clean).sort((p,q)=>q[1]-p[1])[0][0];
+          if(frac>1.2)h.walkIn=true}}
+    }
+    if(h.res==='hit'||h.res==='blocked'){
+      const hand=X.bone[handOf(X,x)]>55?.55:1;
+      const stam=X.stamina<X.stamMax*.25?.65+X.stamina/X.stamMax:1;
+      let d=t.power*X.powerMult*(.75+X.skills[t.skill]/200)*styleMult(X,x,r)*h.mult*stam*hand*(X.limit?1.3:1);
+      if(r===2&&t.type==='straight')d*=clamp(1+(X.reach-Y.reach)/100,.85,1.15);
+      if(h.res==='hit'&&X.counterReady){d*=STYLES[X.style].mods.counter||1.4;h.counter=true}
+      if(h.res==='hit'&&y==='in'){d*=1.25;h.walkIn=true}
+      h.dmg=d;
+    }
+    if(h.res==='miss'&&['slip','duck','pull'].includes(y))out.evaded[yid]=true;
+    out.hits.push(h);
+  }
+  if(out.hits.length===2&&out.hits.every(h=>h.res==='hit')){
+    const[h1,h2]=out.hits, fast=h1.speed<=h2.speed?h1:h2, slow=fast===h1?h2:h1;
+    if(slow.speed-fast.speed>.2&&fast.dmg>=4){slow.dmg*=.5;slow.disrupted=true;if(!fast.counter){fast.dmg*=1.2;fast.counter=true}}
+  }
+  for(const h of out.hits)out.dmgTo[h.def]+=h.dmg*(h.res==='blocked'?.3:1)*(h.region&&REGFX[h.region].shock>1.2?1.25:1);
+  return out;
+}
+
+/* ---------------------------- AI ---------------------------- */
+const STYLE_PRIOR={
+  slugger:{overhand:.9,cross:.5,hook:.5,in:.3,high:.2},
+  counter:{slip:.7,pull:.6,jab:.3,cross:.4,circle:.3},
+  swarmer:{in:.7,hook:.6,liver:.6,duck:.5,upper:.3},
+  outboxer:{jab:.9,out:.4,circle:.4,pull:.3,cross:.3},
+  peekaboo:{high:.5,duck:.5,upper:.6,hook:.4,in:.4},
+};
+function updModel(M,a){
+  for(const k in M.g)M.g[k]*=.96;
+  M.g[a]=(M.g[a]||0)+1;
+  (M.n[M.prev]=M.n[M.prev]||{});M.n[M.prev][a]=(M.n[M.prev][a]||0)+1;
+  M.prev=a;
+}
+function legalActs(range){
+  return ALL_ACTS.filter(k=>!(k==='in'&&range===0)&&!(k==='out'&&range===2)&&!(k==='clinch'&&range===2));
+}
+function aiChoose(X,Y,range,M,greedy){
+  const acts=legalActs(range), iqF=clamp(X.iq/100,.1,.95);
+  const dist={};let tot=0;
+  for(const k of acts){
+    let w=1+(M.g[k]||0)*.6+((M.n[M.prev]||{})[k]||0)*2.5;
+    if(TECH[k].kind==='punch'&&!TECH[k].ranges.includes(range))w*=.3;
+    w=lerp(1,w,iqF);dist[k]=w;tot+=w}
+  const top=Object.entries(dist).sort((p,q)=>q[1]-p[1]).slice(0,8);const tt=top.reduce((s,e)=>s+e[1],0);
+  const pref=STYLES[X.style].range, prior=STYLE_PRIOR[X.style]||{};
+  const scores=acts.map(c=>{
+    let v=0;
+    for(const[p,w]of top){
+      const ex=computeExchange(X,c,Y,p,{range,sim:true});
+      let val=ex.dmgTo.B*1.0-ex.dmgTo.A*1.15;
+      if(ex.range===pref)val+=.6;
+      if(ex.feint&&ex.feint.by==='A')val+=2.5;
+      if(ex.evaded.A)val+=1.2;
+      v+=val*w/tt;
+    }
+    const cost=TECH[c].cost||0;
+    v-=cost*(X.stamina<X.stamMax*.3?.45:.12);
+    if(X.stamina<X.stamMax*.2&&(c==='clinch'||c==='circle'))v+=2;
+    v+=(prior[c]||0)*1.2;
+    return[c,v]});
+  if(greedy)return scores.sort((p,q)=>q[1]-p[1])[0][0];
+  const T=clamp(3.0-X.iq/40,.9,2.8);const mx=Math.max(...scores.map(s=>s[1]));
+  const ws=scores.map(([c,v])=>[c,Math.exp((v-mx)/T)]);const sum=ws.reduce((s,e)=>s+e[1],0);
+  let rr=Math.random()*sum;for(const[c,w]of ws){rr-=w;if(rr<=0)return c}
+  return ws[0][0];
+}
+const TELL={
+  straight:['His lead shoulder twitches forward.','He turns his rear hip in. Something straight is coming.','His weight rocks onto the front foot.'],
+  hook:['His elbow lifts off his ribs.','He dips the lead shoulder, loading something wide.'],
+  upper:['He sinks low, rear hand dropping.','His knees bend. He wants to come up from underneath.'],
+  body:['His eyes drop to your belt line.','He crouches, looking at your ribs.'],
+  overhand:['His rear hand cocks up behind his ear.','He sets his feet wide. Big right hand loading.'],
+  def:['He tucks his chin and shells up.','He goes still, waiting on you.'],
+  move:['His weight shifts. His feet are about to move.','He bounces on his toes, resetting.'],
+  clinch:['He leans in, arms opening to tie you up.'],
+};
+function catOf(k){const t=TECH[k];if(!t)return'def';if(t.kind==='punch'){if(t.target==='body')return'body';return t.type}
+  if(t.kind==='def')return'def';if(t.kind==='clinch')return'clinch';if(k==='feint')return'feint';return'move'}
+function makeTell(F,A,intent){
+  const st=STYLES[A.style].mods;
+  const p=clamp(.4+A.iq/250+(st.read||0)-A.swell/250-A.shock/300-A.sleepPen*.5,.15,.92);
+  const c=catOf(intent);
+  if(A.trueRead){A.trueRead=false;return{text:c==='feint'?'You read him clean: he is going to feint.':pick(TELL[c]),conf:.99,cat:c,sure:true}}
+  let shown=c;
+  if(c==='feint'){shown=Math.random()<p*.55?'feint':pick(['straight','hook'])}
+  else if(Math.random()>p)shown=pick(Object.keys(TELL).filter(k=>k!==c));
+  const text=shown==='feint'?'His shoulder twitches, but his feet stay set. Feint?':pick(TELL[shown]);
+  return{text,conf:p,cat:shown};
+}
+
+/* ---------------------------- WORLD DATA ---------------------------- */
+const SKINS=['#f1c9a5','#e0ac85','#c68a5e','#a8704a','#7d4f32','#4e3021'];
+const HAIRC=['#141010','#3a2414','#7a4a22','#c79a4a','#9b2f22','#d8d4c8'];
+const TRUNKS=['#c8372d','#2645a8','#e0c040','#2f6d3a','#f2f2f2','#5b3a8c','#121212'];
+const GLOVES=['#b3272a','#1c1c1c','#2645a8','#efefef'];
+const HAIRS={buzz:'Buzz',crop:'Crop',pomp:'Pompadour',spiky:'Spiky',tied:'Tied back',bald:'Shaved'};
+const BACKGROUNDS={
+  dock:{n:"Dockworker's kid",d:'You have hauled crates since you were fifteen. Strong back and legs, a little money saved.',
+    fx:p=>{p.body.muscle.back+=10;p.body.muscle.legs+=8;p.body.muscle.arms+=5;p.money=160;p.rel.pop.bond=15}},
+  brawler:{n:'Street brawler',d:'You know how to take a punch because you have taken a lot of them. Heavy hands, sloppy defense, a few too many headaches.',
+    fx:p=>{p.body.muscle.neck+=12;p.body.muscle.arms+=8;p.skills.hook+=12;p.skills.defense-=5;p.body.organs.brain=90;p.money=70;p.rel.pop.bond=8;p.rel.dex.bond=20}},
+  amateur:{n:'Washed-out amateur',d:'Pop coached you once, before you quit. The technique is still in there. So is the debt.',
+    fx:p=>{for(const k of['straight','hook','upper','body','defense','footwork'])p.skills[k]+=12;p.skills.ringIQ+=15;p.body.organs.heart+=8;p.money=30;p.rel.pop.bond=32}},
+};
+const PEOPLE={
+  pop:{n:'Pop Halloran',role:'Trainer. Runs the gym under the rail bridge on a bad knee.'},
+  mina:{n:'Mina',role:'Your little sister, 14. You are all she has.'},
+  rosa:{n:'Rosa Vance',role:'Waitress at the Lucky Diner. Draws fighters in a sketchbook.'},
+  dex:{n:'Dex Calloway',role:'Uptown prospect. Unbeaten. Calls you "dockrat".',rival:true},
+};
+const MEMORIES={
+  mina:{t:"Mina's voice",line:'"Get UP, you idiot! You promised you would walk home!"'},
+  rosa:{t:"Rosa's sketchbook",line:'She drew you standing in the ring. Not lying on it.'},
+  pop:{t:"Pop's voice",line:'"Nobody ever drowned from getting knocked down, kid. You drown by staying there."'},
+  dex:{t:'Dex is watching',line:'Somewhere out there Dex is laughing. Not like this. Not before you meet him.'},
+  dad:{t:"Dad's gloves",line:'Cracked leather on a nail by the door. He never got his shot.'},
+};
+
+/* ---------------------------- ACTIVITIES ---------------------------- */
+const ACT={
+  roadwork:{n:'Roadwork 5k',slot:'day',train:1,g:{heart:.9,lungs:.7,legs:.35},sk:{footwork:.4},fat:12,d:'Heart, lungs, legs'},
+  rope:{n:'Rope & shadowbox',slot:'day',train:1,gym:1,g:{heart:.4,legs:.15},sk:{footwork:.8,ringIQ:.2},fat:7,d:'Footwork, rhythm'},
+  bag:{n:'Heavy bag',slot:'day',train:1,gym:1,g:{arms:.35,shoulders:.35,core:.2},sk:{straight:.5,hook:.5,upper:.4,body:.4},fat:11,hand:1,d:'Technique, power'},
+  mitts:{n:'Mitts with Pop',slot:'day',train:1,gym:1,g:{shoulders:.15},sk:{straight:.8,hook:.8,upper:.7,body:.7,defense:.5,ringIQ:.4},fat:10,bond:{pop:2},d:'Sharp technique'},
+  spar:{n:'Sparring',slot:'day',train:1,gym:1,g:{neck:.2},sk:{defense:1.2,ringIQ:1.0,footwork:.3},fat:15,brain:-.35,risk:.06,d:'Real reps, real head shots'},
+  strength:{n:'Strength & neck',slot:'day',train:1,g:{neck:.6,core:.6,back:.4,legs:.4,arms:.4,shoulders:.3},fat:12,bone:.06,d:'Muscle, bone density'},
+  tapes:{n:'Study fight tapes',slot:'day',sk:{ringIQ:1.0},stress:-1,d:'Ring IQ'},
+  dock:{n:'Dock shift',slot:'day',money:55,fat:16,g:{back:.15,legs:.1},stress:3,risk:.025,d:'$55, heavy, risky'},
+  diner:{n:'Diner shift',slot:'day',money:35,fat:7,stress:1,bond:{rosa:2},nutr:4,d:'$35 + a meal'},
+  gymhelp:{n:'Fix up the gym',slot:'day',fat:6,bond:{pop:3},dues:8,d:'Pop knocks $8 off dues'},
+  mina:{n:'Time with Mina',slot:'day',stress:-6,bond:{mina:4},money:-5,d:'Homework, talk'},
+  rosa:{n:'See Rosa',slot:'day',stress:-5,bond:{rosa:4},money:-8,d:'Coffee, sketches'},
+  cook:{n:'Cook proper food',slot:'day',money:-8,nutr:10,stress:-1,d:'+Nutrition'},
+  rest:{n:'Rest & stretch',slot:'day',fat:-18,stress:-4,d:'Recover'},
+  sleep:{n:'Sleep 8h',slot:'night',sleep:8,d:'Full night'},
+  late:{n:'Sleep 5h',slot:'night',sleep:5,d:'Short night'},
+  night:{n:'Night shift',slot:'night',sleep:3,money:65,stress:4,fat:6,d:'$65, wrecks sleep'},
+  drinks:{n:'Drinks w/ crew',slot:'night',sleep:5,money:-15,stress:-10,liver:-1.5,nutr:-4,bond:{},d:'Unwind, liver pays'},
+};
+const GROCERY={noodles:{n:'Instant noodles',cost:15,target:35},basic:{n:'Basic groceries',cost:35,target:60},athlete:{n:"Fighter's diet",cost:70,target:85}};
+const PRESETS={
+  balanced:[['roadwork','dock','bag','sleep'],['roadwork','dock','mitts','sleep'],['roadwork','dock','bag','sleep'],['roadwork','dock','spar','sleep'],['roadwork','dock','strength','sleep'],['diner','diner','rosa','sleep'],['rest','mina','cook','sleep']],
+  grind:[['dock','dock','diner','night'],['dock','dock','bag','sleep'],['dock','dock','diner','night'],['dock','dock','bag','sleep'],['dock','dock','diner','drinks'],['diner','diner','dock','sleep'],['rest','mina','rest','sleep']],
+  camp:[['roadwork','mitts','strength','sleep'],['roadwork','spar','tapes','sleep'],['roadwork','bag','strength','sleep'],['roadwork','mitts','spar','sleep'],['roadwork','diner','bag','sleep'],['roadwork','diner','rosa','sleep'],['rest','mina','cook','sleep']],
+};
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], SLOTS=['Morning','Afternoon','Evening','Night'];
+
+/* ---------------------------- STATE ---------------------------- */
+let S={screen:'title',settings:{roundLen:60}};
+function newPlayer(c){
+  const p={name:c.name||'Kaz Moreno',nick:c.nick||'',height:c.height,weight:c.weight,reachAdj:c.reachAdj,stance:c.stance,style:c.style,bg:c.bg,look:c.look,
+    week:1,money:0,fatigue:10,sleepDebt:2,nutrition:50,stress:35,grocery:'basic',
+    skills:{straight:25,hook:22,upper:18,body:20,defense:20,footwork:22,ringIQ:15},
+    body:{skel:{skull:100,jaw:100,nose:100,orbital:100,ribs:100,handL:100,handR:100,density:70},
+      muscle:{neck:35,shoulders:40,core:38,back:40,legs:42,arms:40},
+      organs:{heart:40,lungs:42,liver:100,kidneys:100,brain:100,brainCap:100}},
+    rel:{pop:{bond:15},mina:{bond:65},rosa:{bond:30},dex:{bond:10}},
+    injuries:[],record:{w:0,l:0,d:0,ko:0},fight:null,fightsDone:0,flags:{},plan:PRESETS.balanced.map(d=>d.slice()),
+    combos:[{n:'One-two',s:['jab','cross']},{n:'Double jab, cross',s:['jab','jab','cross']},{n:'Jab to the liver',s:['jab','liver']},{n:'Slip, counter cross',s:['slip','cross']},{n:'Feint, overhand',s:['feint','overhand']},{n:'Dig: liver, hook, upper',s:['liver','hook','upper']}],
+    seen:{},log:[]};
+  p.classLimit=classLimit(c.weight);
+  BACKGROUNDS[c.bg].fx(p);
+  return p;
+}
+function save(){try{localStorage.setItem('cot_save',JSON.stringify({p:S.p,settings:S.settings}))}catch(e){}}
+function loadSave(){try{const j=JSON.parse(localStorage.getItem('cot_save')||'null');return j&&j.p?j:null}catch(e){return null}}
+
+/* ---------------------------- PIXEL DRAWING ---------------------------- */
+function shade(hex,amt){let c=hex.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');
+  const n=parseInt(c,16);let r=n>>16,g=n>>8&255,b=n&255;
+  const f=v=>clamp(Math.round(amt<0?v*(1+amt):v+(255-v)*amt),0,255);
+  return'#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+function prect(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h))}
+function pline(g,x0,y0,x1,y1,w,c){g.fillStyle=c;const n=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)));
+  for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n,y=y0+(y1-y0)*i/n;g.fillRect(Math.round(x-w/2),Math.round(y-w/2),w,w)}}
+function pell(g,cx,cy,rx,ry,c){g.fillStyle=c;for(let y=-ry;y<=ry;y++){const w=Math.round(rx*Math.sqrt(Math.max(0,1-(y*y)/(ry*ry))));g.fillRect(Math.round(cx-w),Math.round(cy+y),w*2+1,1)}}
+function healthCol(v){v=clamp(v,0,100);const a=[115,194,122],b=[231,170,61],c=[212,67,47];
+  const m=(p,q,t)=>p.map((x,i)=>Math.round(x+(q[i]-x)*t));const k=v>60?m(b,a,(v-60)/40):m(c,b,v/60);return`rgb(${k})`}
+function boneCol(v){v=clamp(v,0,100);const a=[236,227,207],b=[231,170,61],c=[212,67,47];
+  const m=(p,q,t)=>p.map((x,i)=>Math.round(x+(q[i]-x)*t));const k=v>65?m(b,a,(v-65)/35):m(c,b,v/65);return`rgb(${k})`}
+
+/* Side-view boxer. P = pose {lean,crouch,hdx,hdy,L:[x,y],R:[x,y],ext,...}. face: +1 right, -1 left. */
+const ARM=24;
+function ik(sx,sy,gx,gy,L1,L2,up){
+  let dx=gx-sx,dy=gy-sy,d=Math.hypot(dx,dy);if(d<1)d=1;
+  const max=L1+L2-.5;if(d>max){gx=sx+dx/d*max;gy=sy+dy/d*max;dx=gx-sx;dy=gy-sy;d=max}
+  const a=(L1*L1-L2*L2+d*d)/(2*d),h=Math.sqrt(Math.max(0,L1*L1-a*a));
+  const px=sx+a*dx/d,py=sy+a*dy/d;let ex=px-h*dy/d,ey=py+h*dx/d,ex2=px+h*dy/d,ey2=py-h*dx/d;
+  if(up?ey>ey2:ey<ey2){ex=ex2;ey=ey2}
+  return[ex,ey,gx,gy];
+}
+function drawHair(g,style,hx,hy,face,c){
+  if(style==='bald'){prect(g,hx-1,hy-5,2,1,shade(c,.25));return}
+  const top=()=>{for(let i=-4;i<=4;i++){const h=Math.abs(i)>3?1:2;prect(g,hx+i,hy-6,1,h,c)}prect(g,hx-face*4-(face>0?1:0),hy-5,2,4,c)};
+  if(style==='buzz'){for(let i=-4;i<=4;i++)prect(g,hx+i,hy-6,1,1,c);prect(g,hx-face*4-(face>0?0:1),hy-5,1,3,c)}
+  else if(style==='crop'){top()}
+  else if(style==='pomp'){top();prect(g,hx+face*1-(face>0?0:3),hy-9,4,3,c);prect(g,hx+face*4-(face>0?0:2),hy-8,3,2,c)}
+  else if(style==='spiky'){top();for(let i=-3;i<=3;i+=2)prect(g,hx+i,hy-8-(i%4===1?1:0),1,2,c)}
+  else if(style==='tied'){top();prect(g,hx-face*6-(face>0?1:0),hy-5,3,3,c)}
+}
+function drawBoxer(g,B,hipX,face,P,vis){
+  const s=B.height/180,floor=154,crouch=P.crouch||0;
+  const hipY=floor-30*s+crouch*.6, shX=hipX+face*(P.lean||0), shY=hipY-24*s+crouch*.3;
+  const hx=shX+face*(2+(P.hdx||0)), hy=shY-8+(P.hdy||0);
+  const skin=B.look.skin, skinD=shade(skin,-.25), glove=B.look.glove, gloveD=shade(glove,-.35);
+  if(P.down){ // sprawled on the canvas
+    const y=floor-3;pline(g,hipX,y,hipX-face*22,y-1,9,skin);prect(g,hipX-4,y-4,9,7,B.look.trunks);
+    pell(g,hipX-face*28,y-3,5,4,skin);drawHair(g,B.look.hair,hipX-face*28,y+1,face,B.look.hairC);
+    pline(g,hipX,y+1,hipX+face*18,y+2,4,skinD);pline(g,hipX-face*18,y-1,hipX-face*12,y-9,3,skinD);prect(g,hipX-face*12-3,y-12,6,6,glove);
+    pline(g,hipX-face*20,y,hipX-face*26,y+3,3,skin);prect(g,hipX-face*27-3,y,6,5,glove);
+    B._head=[hipX-face*28,y-3];B._body=[hipX-face*10,y];return}
+  // legs
+  const fF=hipX+face*10,bF=hipX-face*8,kY=hipY+13*s+crouch*.25;
+  pline(g,hipX-face*2,hipY+4,hipX-face*4,kY,4,skinD);pline(g,hipX-face*4,kY,bF,floor-2,4,skinD);prect(g,bF-3,floor-2,7,2,'#18151f');
+  pline(g,hipX+face*2,hipY+4,hipX+face*7,kY,4,skin);pline(g,hipX+face*7,kY,fF,floor-2,4,skin);prect(g,fF-3,floor-2,7,2,'#2a2633');
+  // shoulders and gloves
+  const sL=[shX+face*3,shY+2], sR=[shX-face*2,shY+1];
+  const gl=P.Lw||[sL[0]+face*P.L[0],sL[1]+P.L[1]], gr=P.Rw||[sR[0]+face*P.R[0],sR[1]+P.R[1]];
+  const L1=11.5*s,L2=12*s;
+  const armR=ik(sR[0],sR[1],gr[0],gr[1],L1,L2,P.upR);
+  pline(g,sR[0],sR[1],armR[0],armR[1],3,skinD);pline(g,armR[0],armR[1],armR[2],armR[3],3,skinD);
+  prect(g,armR[2]-3,armR[3]-3,7,7,gloveD);
+  // torso
+  pline(g,hipX,hipY-2,shX,shY+4,10,skin);
+  pline(g,hipX-face*3,hipY-2,shX-face*3,shY+4,2,skinD);
+  if(vis&&vis.ribs>45)prect(g,hipX+face*1,hipY-12,3,3,'#6b4a8c');
+  if(vis&&vis.liver>20)prect(g,hipX+face*(face>0?2:-4),hipY-8,3,3,'#7a3b5c');
+  prect(g,hipX-6,hipY-4,12,10,B.look.trunks);prect(g,hipX-6,hipY-4,12,2,shade(B.look.trunks,.35));
+  // head
+  pline(g,shX+face*1,shY,hx-face*1,hy+4,4,skin);
+  pell(g,hx,hy,4,5,skin);
+  prect(g,hx+face*4-(face>0?0:1),hy-1,1,3,skin); // brow/nose ridge
+  prect(g,hx+face*5-(face>0?0:1),hy+1,1,1,shade(skin,-.15));
+  prect(g,hx+face*2-(face>0?0:1),hy-1,1,1,'#120f16'); // eye
+  prect(g,hx+face*3-(face>0?0:1),hy+3,2,1,shade(skin,-.4)); // mouth
+  prect(g,hx-face*1-(face>0?0:1),hy,1,2,skinD); // ear
+  drawHair(g,B.look.hair,hx,hy,face,B.look.hairC);
+  if(vis){
+    if(vis.swell>25){const r=vis.swell>60?2:1;pell(g,hx+face*2,hy-1,r,r,'#7b5a9e');if(vis.swell>75)prect(g,hx+face*2-1,hy-1,3,1,'#3a2a4a')}
+    if(vis.bleed>0){prect(g,hx+face*4-(face>0?0:1),hy+2,1,2,'#c2241c');if(vis.bleed>1)prect(g,hx+face*3-(face>0?0:1),hy+5,1,2,'#c2241c')}
+    if(vis.flash>0){g.globalAlpha=vis.flash;pell(g,hx,hy,5,6,'#ffffff');g.globalAlpha=1}
+  }
+  // lead arm (front)
+  const armL=ik(sL[0],sL[1],gl[0],gl[1],L1,L2,P.upL);
+  pline(g,sL[0],sL[1],armL[0],armL[1],3,skin);pline(g,armL[0],armL[1],armL[2],armL[3],3,skin);
+  prect(g,armL[2]-3,armL[3]-3,7,7,glove);prect(g,armL[2]-2,armL[3]-2,2,1,shade(glove,.45));prect(g,armL[2]-3,armL[3]+3,7,1,'#eee');
+  B._head=[hx,hy];B._body=[lerp(hipX,shX,.5),lerp(hipY,shY,.45)];B._sh=[shX,shY];B._gl=[armL[2],armL[3]];B._gr=[armR[2],armR[3]];
+}
+/* Side-view poses: L/R = lead/rear glove offsets from shoulder (facing right). ext = which hand punches toward what. */
+const SPOSE={
+  neutral:{lean:2,crouch:2,L:[11,-6],R:[7,-8]},
+  high:{lean:1,crouch:3,L:[8,-11],R:[6,-12]},
+  low:{lean:3,crouch:5,L:[8,5],R:[5,7]},
+  slip:{lean:6,crouch:5,hdx:3,hdy:5,L:[10,-3],R:[6,-4]},
+  duck:{lean:11,crouch:11,hdx:4,hdy:12,L:[9,3],R:[5,2]},
+  pull:{lean:-6,crouch:0,hdx:-3,hdy:-1,L:[10,-4],R:[4,-6]},
+  feint:{lean:5,crouch:3,L:[16,-5],R:[7,-8]},
+  clinch:{lean:9,crouch:4,hdx:4,hdy:3,L:[16,0],R:[14,2]},
+  in:{lean:5,crouch:3,L:[11,-6],R:[7,-8]},out:{lean:-2,crouch:1,L:[10,-6],R:[6,-8]},circle:{lean:2,crouch:2,L:[11,-6],R:[7,-8]},
+  frozen:{lean:-3,crouch:1,hdx:-2,hdy:1,L:[8,8],R:[5,10]},
+  win:{lean:-2,crouch:0,hdy:-1,L:[2,-26],R:[-1,-26]},
+  jab:{lean:4,crouch:2,L:[11,-6],R:[7,-9],ext:'L',to:'head'},
+  cross:{lean:7,crouch:3,L:[8,-10],R:[7,-8],ext:'R',to:'head'},
+  hook:{lean:5,crouch:4,L:[11,-6],R:[7,-10],ext:'L',to:'head',arc:'hook'},
+  upper:{lean:5,crouch:7,L:[8,-10],R:[7,8],ext:'R',to:'head',arc:'upper'},
+  overhand:{lean:8,crouch:3,L:[8,-9],R:[4,-12],ext:'R',to:'head',arc:'over'},
+  bjab:{lean:7,crouch:8,L:[11,-2],R:[7,-8],ext:'L',to:'body'},
+  bcross:{lean:8,crouch:8,L:[8,-9],R:[7,-2],ext:'R',to:'body'},
+  liver:{lean:7,crouch:8,L:[11,0],R:[7,-9],ext:'L',to:'body',arc:'hook'},
+};
+
+/* ---------------------------- FRONT-VIEW ANATOMY ---------------------------- */
+function anatomyData(src,isFighter){
+  if(!isFighter){const b=src.body;return{skel:b.skel,muscle:b.muscle,organs:b.organs,fatigue:src.fatigue,shock:0,liver:0,swell:0,injuries:src.injuries}}
+  const F=src,sk={};for(const k in F.bone)sk[k]=clamp(100-F.bone[k],0,100);sk.density=70;
+  const base=F.isPlayer&&S.p?S.p.body:null;
+  return{skel:sk,muscle:base?base.muscle:{neck:50,shoulders:50,core:50,back:50,legs:50,arms:50},
+    organs:{heart:clamp(F.stamina/F.stamMax*100,0,100),lungs:clamp(F.stamina/F.stamMax*100+(F.bone.nose>40?-20:0),0,100),liver:clamp(100-F.liverLoad/F.liverMax*100,0,100),
+      kidneys:100,brain:clamp(100-F.shock/F.chin*100,0,100)},fatigue:clamp(100-F.stamina/F.stamMax*100,0,100),shock:F.shock,swell:F.swell,injuries:[]};
+}
+function drawAnatomy(cv,D,layer,hit){
+  const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
+  const ox=48,oy=6,R=(x0,y0,x1,y1,c)=>prect(g,ox+x0,oy+y0,x1-x0,y1-y0,c);
+  const sil='#3a3350';
+  pell(g,ox,oy+9,8,9,sil);R(-3,18,3,22,sil);R(-16,22,16,28,sil);R(-12,26,12,58,sil);R(-11,58,11,66,sil);
+  R(-17,24,-12,56,sil);R(12,24,17,56,sil);R(-10,66,-2,118,sil);R(2,66,10,118,sil);
+  const sk=D.skel,mu=D.muscle,or=D.organs;
+  if(layer==='skeleton'){
+    pell(g,ox,oy+8,7,7,boneCol(sk.skull));pell(g,ox,oy+8,5,5,sil);
+    pell(g,ox-3,oy+8,2,2,'#15131d');pell(g,ox+3,oy+8,2,2,'#15131d');
+    g.strokeStyle=boneCol(sk.orbital);g.lineWidth=1;g.strokeRect(ox-5.5,oy+5.5,5,5);g.strokeRect(ox+.5,oy+5.5,5,5);
+    R(-1,10,1,13,boneCol(sk.nose));R(-6,14,6,17,boneCol(sk.jaw));R(-4,17,4,18,boneCol(sk.jaw));
+    for(let y=19;y<64;y+=2)R(-1,y,1,y+1,boneCol(sk.skull));
+    R(-14,23,14,24,boneCol(100));
+    for(let i=0;i<6;i++){const y=27+i*3;R(-11+i,y,-2,y+1,boneCol(sk.ribs));R(2,y,11-i,y+1,boneCol(sk.ribs));
+      if(sk.ribs<55&&i===3){R(-8,y-1,-7,y+2,'#d4432f')}}
+    R(-1,26,1,42,boneCol(sk.ribs));
+    R(-10,56,10,60,boneCol(100));R(-8,60,-4,63,boneCol(100));R(4,60,8,63,boneCol(100));
+    R(-15,25,-14,40,boneCol(100));R(-15,41,-14,55,boneCol(100));R(14,25,15,40,boneCol(100));R(14,41,15,55,boneCol(100));
+    R(-17,55,-12,60,boneCol(sk.handR));R(12,55,17,60,boneCol(sk.handL));
+    R(-7,66,-5,92,boneCol(100));R(-7,94,-5,116,boneCol(100));R(5,66,7,92,boneCol(100));R(5,94,7,116,boneCol(100));
+    if(sk.jaw<50)R(-3,14,-2,18,'#d4432f');if(sk.nose<60)R(0,10,1,13,'#d4432f');
+  }else if(layer==='muscle'){
+    const mc=(v,f)=>{const t=clamp(v/100,0,1);const k=1-(f||0)/180;return`rgb(${Math.round((120+120*t)*k)},${Math.round((40+40*t)*k)},${Math.round((45+30*t)*k)})`};
+    const f=D.fatigue;
+    R(-4,18,4,22,mc(mu.neck,f));R(-9,20,-4,23,mc(mu.neck,f));R(4,20,9,23,mc(mu.neck,f));
+    R(-16,22,-11,30,mc(mu.shoulders,f));R(11,22,16,30,mc(mu.shoulders,f));
+    R(-11,25,-1,32,mc(mu.shoulders*.6+mu.arms*.4,f));R(1,25,11,32,mc(mu.shoulders*.6+mu.arms*.4,f));
+    for(let i=0;i<3;i++){R(-5,34+i*6,-1,39+i*6,mc(mu.core,f));R(1,34+i*6,5,39+i*6,mc(mu.core,f))}
+    R(-11,34,-6,54,mc(mu.core*.8,f));R(6,34,11,54,mc(mu.core*.8,f));
+    R(-17,30,-12,42,mc(mu.arms,f));R(12,30,17,42,mc(mu.arms,f));R(-17,43,-12,55,mc(mu.arms*.9,f));R(12,43,17,55,mc(mu.arms*.9,f));
+    R(-10,66,-2,92,mc(mu.legs,f));R(2,66,10,92,mc(mu.legs,f));R(-9,95,-3,112,mc(mu.legs*.9,f));R(3,95,9,112,mc(mu.legs*.9,f));
+  }else if(layer==='organs'){
+    pell(g,ox,oy+7,6,5,healthCol(or.brain));
+    if(D.swell>30){pell(g,ox+3,oy+8,2,2,'#9479c4')}
+    R(-10,26,-2,40,healthCol(or.lungs));R(2,26,10,40,healthCol(or.lungs));
+    pell(g,ox+3,oy+33,3,3,healthCol(or.heart));
+    R(-11,40,-2,48,healthCol(or.liver));R(-11,48,-6,50,healthCol(or.liver));
+    R(0,40,7,47,'#c99a6a');R(8,40,11,46,healthCol(or.liver*.5+50));
+    R(-8,48,-5,53,healthCol(or.kidneys));R(5,48,8,53,healthCol(or.kidneys));
+    for(let y=50;y<58;y+=2)R(-6,y,6,y+1,'#a7766a');
+  }else if(layer==='hitbox'){
+    const P=hit&&hit.pose?hit.pose:poseOf('neutral',{});
+    for(const r of REG_HEAD)R(r[0]+P.hx,r[1]+P.hy,r[2]+P.hx,r[3]+P.hy,r[4]==='chin'?'#e7aa3d':r[4]==='temple'?'#d4432f':'#6b5f86');
+    for(const r of REG_BODY)R(r[0]+P.tx,r[1]+P.ty,r[2]+P.tx,r[3]+P.ty,r[4]==='liver'?'#d4432f':r[4]==='solar'?'#e7aa3d':'#4e4568');
+    g.globalAlpha=.85;for(const r of P.guards)R(r[0],r[1],r[2],r[3],'#2645a8');g.globalAlpha=1;
+    if(hit&&hit.shape){g.strokeStyle=hit.res==='hit'?'#ffffff':'#e7aa3d';g.lineWidth=1;g.setLineDash([2,1]);const s=hit.shape;g.strokeRect(ox+s[0]+.5,oy+s[1]+.5,s[2]-s[0]-1,s[3]-s[1]-1);g.setLineDash([])}
+  }
+}
+
+/* ---------------------------- UI HELPERS ---------------------------- */
+const view=()=>$('#view');
+function meter(label,v,max,color,txt){const pct=clamp(v/max*100,0,100);
+  return`<div class="meter"><span>${label}</span><div class="track"><div class="fill" style="width:${pct}%;background:${color||'var(--gold)'}"></div></div><span class="v">${txt??Math.round(v)}</span></div>`}
+function showModal(html){$('#modalbox').innerHTML=html;$('#modal').hidden=false}
+function closeModal(){$('#modal').hidden=true;$('#modalbox').innerHTML=''}
+function topStats(){
+  const p=S.p,el=$('#topstats');if(!p||S.screen==='title'||S.screen==='create'){el.innerHTML='';return}
+  const f=p.fight?(p.fight.weeks===0?'FIGHT THIS WEEK':`Fight in ${p.fight.weeks+1} wk`):'No fight booked';
+  el.innerHTML=`<span>Week ${p.week}</span><span>$${Math.round(p.money)}</span><span>${p.record.w}-${p.record.l}-${p.record.d}</span><span style="color:var(--blood)">${f}</span>`;
+}
+
+/* ---------------------------- TITLE ---------------------------- */
+function renderTitle(){
+  S.screen='title';topStats();const sv=loadSave();
+  view().innerHTML=`<section class="hero">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <span class="tag">A TURN-BASED BOXING LIFE</span>
+      <h1>Count<br>of Ten</h1>
+      <p class="lede">Every turn is one second. Read his shoulders, guess the feint, slip the cross, and dig to the liver. Outside the ring you have rent, a little sister, a girl who draws you in her sketchbook, and an old trainer under the rail bridge. Neglect your body and it shows up in round three.</p>
+      <div class="row"><button class="primary" id="b-new">New boxer</button>${sv?'<button id="b-cont">Continue career</button>':''}</div>
+      <p class="dim" style="font-size:13px">Keys in the ring: 1-8 punches, Q-Y defense, A/S/D footwork, F feint.</p>
+    </div>
+    <canvas id="titlecv" class="px" width="320" height="180"></canvas>
+  </section>`;
+  $('#b-new').onclick=renderCreate;
+  if(sv)$('#b-cont').onclick=()=>{S.p=sv.p;S.settings=sv.settings||S.settings;renderLife()};
+  const cv=$('#titlecv'),g=cv.getContext('2d');
+  const A={height:180,look:{skin:'#c68a5e',hair:'pomp',hairC:'#141010',trunks:'#c8372d',glove:'#b3272a'}};
+  const B={height:184,look:OPPS[3].look};
+  let t0=performance.now();
+  (function loop(now){if(S.screen!=='title')return;const t=(now-t0)/1000;
+    drawArena(g,t);const ph=(t%2.4)/2.4;
+    const pa=ph<.3?lerpPose(SPOSE.neutral,SPOSE.slip,ph/.3):ph<.6?SPOSE.slip:lerpPose(SPOSE.slip,SPOSE.neutral,(ph-.6)/.4);
+    const pb=ph<.15?SPOSE.neutral:ph<.5?SPOSE.cross:SPOSE.neutral;
+    const bp=resolvePunch(pb,B,-1,A,ph<.15?0:ph<.3?(ph-.15)/.15:ph<.42?1:Math.max(0,1-(ph-.42)/.08));
+    drawBoxer(g,A,138,1,pa,null);drawBoxer(g,B,184,-1,bp,null);
+    requestAnimationFrame(loop)})(t0);
+}
+
+/* ---------------------------- CREATE ---------------------------- */
+function renderCreate(){
+  S.screen='create';topStats();
+  const c={name:'Kaz Moreno',nick:'',height:178,weight:68,reachAdj:3,stance:'orthodox',style:'swarmer',bg:'dock',
+    look:{skin:SKINS[2],hair:'pomp',hairC:HAIRC[0],trunks:TRUNKS[0],glove:GLOVES[0]}};
+  S.draft=c;
+  const sw=(arr,key)=>`<div class="chips">${arr.map(v=>`<button class="swatch${c.look[key]===v?' sel':''}" data-k="${key}" data-v="${v}" style="background:${v}" aria-label="${key} ${v}"></button>`).join('')}</div>`;
+  view().innerHTML=`<div class="grid2">
+   <section class="panel">
+    <h2>Build your boxer</h2>
+    <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+      <label>Name<input type="text" id="c-name" value="${esc(c.name)}" maxlength="24"></label>
+      <label>Ring nickname<input type="text" id="c-nick" placeholder="earned later, or pick now" maxlength="20"></label>
+      <label>Height <span class="mono" id="v-height"></span><input type="range" id="c-height" min="160" max="196" value="${c.height}"></label>
+      <label>Weight <span class="mono" id="v-weight"></span><input type="range" id="c-weight" min="54" max="90" value="${c.weight}"></label>
+      <label>Reach vs height <span class="mono" id="v-reach"></span><input type="range" id="c-reach" min="-6" max="10" value="${c.reachAdj}"></label>
+      <label>Stance<select id="c-stance"><option value="orthodox">Orthodox (left lead)</option><option value="southpaw">Southpaw (right lead)</option></select></label>
+    </div>
+    <h3>Style</h3><div class="cards" id="c-style">${Object.entries(STYLES).map(([k,v])=>`<button data-style="${k}" class="${k===c.style?'sel':''}">${v.name}<small>${v.blurb}</small></button>`).join('')}</div>
+    <h3>Where you come from</h3><div class="cards" id="c-bg">${Object.entries(BACKGROUNDS).map(([k,v])=>`<button data-bg="${k}" class="${k===c.bg?'sel':''}">${v.n}<small>${v.d}</small></button>`).join('')}</div>
+    <h3>Look</h3>
+    <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <label>Skin${sw(SKINS,'skin')}</label><label>Hair color${sw(HAIRC,'hairC')}</label>
+      <label>Trunks${sw(TRUNKS,'trunks')}</label><label>Gloves${sw(GLOVES,'glove')}</label>
+      <label>Hair<select id="c-hair">${Object.entries(HAIRS).map(([k,v])=>`<option value="${k}"${k===c.look.hair?' selected':''}>${v}</option>`).join('')}</select></label>
+    </div>
+   </section>
+   <aside class="panel">
+    <canvas id="c-prev" class="px" width="160" height="110"></canvas>
+    <div id="c-derived"></div>
+    <p class="dim" style="font-size:13px" id="c-sig"></p>
+    <button class="primary" id="c-go">Start: Week 1 under the bridge</button>
+   </aside></div>`;
+  const upd=()=>{
+    c.name=$('#c-name').value.trim()||'Kaz Moreno';c.nick=$('#c-nick').value.trim();
+    c.height=+$('#c-height').value;c.weight=+$('#c-weight').value;c.reachAdj=+$('#c-reach').value;c.stance=$('#c-stance').value;c.look.hair=$('#c-hair').value;
+    $('#v-height').textContent=c.height+' cm';$('#v-weight').textContent=c.weight+' kg ('+weightClass(c.weight)+')';$('#v-reach').textContent=(c.height+c.reachAdj)+' cm reach';
+    const p=newPlayer(c),F=fighterFromPlayer(p);
+    $('#c-derived').innerHTML=meter('Power',F.powerMult*60,100,'var(--blood)',r1(F.powerMult))+meter('Hand speed',(1.4-F.speedMult)*120,100,'var(--gold)')+meter('Chin',F.chin,110,'var(--bruise)')+meter('Gas tank',F.stamMax,140,'var(--ok)')+meter('Ring IQ',p.skills.ringIQ,100,'var(--canvas)');
+    $('#c-sig').textContent=STYLES[c.style].sig;
+  };
+  view().querySelectorAll('input,select').forEach(el=>el.addEventListener('input',upd));
+  view().querySelectorAll('.swatch').forEach(b=>b.onclick=()=>{c.look[b.dataset.k]=b.dataset.v;b.parentElement.querySelectorAll('.swatch').forEach(x=>x.classList.toggle('sel',x===b))});
+  $('#c-style').onclick=e=>{const b=e.target.closest('button');if(!b)return;c.style=b.dataset.style;$('#c-style').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b));upd()};
+  $('#c-bg').onclick=e=>{const b=e.target.closest('button');if(!b)return;c.bg=b.dataset.bg;$('#c-bg').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b));upd()};
+  $('#c-go').onclick=()=>{upd();S.p=newPlayer(c);save();introScene()};
+  upd();
+  const cv=$('#c-prev'),g=cv.getContext('2d');let t0=performance.now();
+  (function loop(now){if(S.screen!=='create')return;const t=(now-t0)/1000;
+    g.fillStyle='#1e1b2a';g.fillRect(0,0,160,110);g.fillStyle='#2b2638';g.fillRect(0,92,160,18);
+    const B={height:c.height,look:c.look},P=Object.assign({},SPOSE.neutral,{crouch:2+Math.sin(t*4)*1.2});
+    g.save();g.translate(0,-50);drawBoxer(g,B,74,1,P,null);g.restore();requestAnimationFrame(loop)})(t0);
+}
+const CLASSES=[57,61,66,69,72,76,79,86,200];
+function classLimit(w){return CLASSES.find(c=>w<=c)}
+function weightClass(w){return w<=57?'Featherweight':w<=61?'Lightweight':w<=66?'Super lightweight':w<=69?'Welterweight':w<=72?'Super welterweight':w<=76?'Middleweight':w<=79?'Super middleweight':w<=86?'Light heavyweight':'Cruiserweight'}
+
+function introScene(){
+  showModal(`<span class="speaker">WEEK 1 · UNDER THE RAIL BRIDGE</span>
+  <div class="scene"><p>The 6:10 freight rattles the windows of Halloran's Gym. Pop doesn't look up from taping a kid's hands.</p><br>
+  <p><b>Pop:</b> "You again. You know what I charge. Twenty-five a week, and you show up. Every day. You miss days, you're wasting my ring."</p><br>
+  <p>At home, Mina has left a note on the fridge: <i>rent is due sunday. i ate the last noodles sorry.</i></p></div>
+  <p class="dim">Plan each week, then live it. Training builds the body, work pays the rent, and the people you spend time with become what gets you off the canvas. Pop says a fighter's break comes when he isn't looking.</p>
+  <button class="primary" id="m-ok">Plan week 1</button>`);
+  $('#m-ok').onclick=()=>{closeModal();renderLife()};
+}
+
+/* ---------------------------- LIFE: WEEK PLANNER ---------------------------- */
+let bodyLayer='skeleton';
+function renderLife(){
+  S.screen='life';topStats();const p=S.p;
+  const opts=slot=>Object.entries(ACT).filter(([,a])=>a.slot===slot);
+  const sel=(d,s)=>{const slot=s===3?'night':'day';return`<select id="pl-${d}-${s}" data-d="${d}" data-s="${s}" aria-label="${DAYS[d]} ${SLOTS[s]}">${opts(slot).map(([k,a])=>`<option value="${k}"${p.plan[d][s]===k?' selected':''}>${a.n}</option>`).join('')}</select>`};
+  const opp=p.fight?oppData(p.fight.opp):null;
+  view().innerHTML=`<div class="grid2">
+   <section class="panel">
+    <div class="row" style="justify-content:space-between"><h2>Week ${p.week}</h2>
+      <div class="row"><span class="dim" style="font-size:13px">Presets</span>${Object.keys(PRESETS).map(k=>`<button data-preset="${k}">${k}</button>`).join('')}</div></div>
+    ${opp?`<div class="read"><b>${p.fight.weeks===0?'FIGHT NIGHT SATURDAY':'BOOKED'}</b>${esc(opp.name)} (${opp.rec}), ${STYLES[opp.style].name.toLowerCase()}. ${esc(opp.blurb)}</div>`:''}
+    <div class="slothead"><span></span>${SLOTS.map(s=>`<span>${s}</span>`).join('')}</div>
+    <div class="plan">${DAYS.map((dn,d)=>`<div class="day"><span class="dn">${dn}</span>${[0,1,2,3].map(s=>sel(d,s)).join('')}</div>`).join('')}</div>
+    <div class="row" style="justify-content:space-between">
+      <label style="flex:1;min-width:180px">Groceries this week<select id="pl-groc">${Object.entries(GROCERY).map(([k,v])=>`<option value="${k}"${p.grocery===k?' selected':''}>${v.n} ($${v.cost})</option>`).join('')}</select></label>
+      <div class="mono" id="pl-budget" style="font-size:13px"></div>
+    </div>
+    <div class="row"><button class="primary" id="pl-go">Live the week</button><button id="pl-combos">Combo notebook</button><button id="pl-settings">Round length: ${S.settings.roundLen}s</button></div>
+    <div class="log" id="lifelog">${(p.log.slice(-40)).map(l=>`<div class="${l.c||''}">${esc(l.t)}</div>`).join('')||'<div class="dim">Your week will be written here.</div>'}</div>
+   </section>
+   <aside class="panel">
+    <h3>Body</h3>
+    <div class="tabs" id="bl-tabs">${['skeleton','muscle','organs'].map(l=>`<button data-l="${l}" class="${bodyLayer===l?'sel':''}">${l}</button>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;align-items:start">
+      <canvas id="bodycv" class="px" width="96" height="128"></canvas>
+      <div id="bodyread" class="legend" style="grid-template-columns:1fr"></div>
+    </div>
+    <div>${meter('Fatigue',p.fatigue,100,'var(--blood)')}${meter('Sleep debt',p.sleepDebt,30,'var(--bruise)',r1(p.sleepDebt)+'h')}${meter('Nutrition',p.nutrition,100,'var(--ok)')}${meter('Stress',p.stress,100,'var(--blood)')}</div>
+    <h3>Skills</h3>
+    <div>${Object.entries(p.skills).map(([k,v])=>meter({straight:'Straights',hook:'Hooks',upper:'Uppercuts',body:'Body work',defense:'Defense',footwork:'Footwork',ringIQ:'Ring IQ'}[k],v,100)).join('')}</div>
+    <h3>People</h3>
+    <div style="display:flex;flex-direction:column;gap:6px">${Object.entries(PEOPLE).map(([k,v])=>`<div class="person"><span><b>${v.n}</b> <span class="dim">${v.rival?'rivalry':'bond'}</span><br><span class="dim" style="font-size:12px">${v.role}</span></span><div class="track"><div class="fill" style="width:${clamp(p.rel[k].bond,0,100)}%;${v.rival?'background:var(--blood)':''}"></div></div></div>`).join('')}</div>
+    ${p.injuries.length?`<h3>Injuries</h3><div class="log" style="max-height:none">${p.injuries.map(i=>`<div class="bad">${esc(i.n)}: ${Math.ceil(i.days/7)} wk to heal</div>`).join('')}</div>`:''}
+   </aside></div>`;
+  view().querySelectorAll('select[data-d]').forEach(el=>el.onchange=()=>{p.plan[+el.dataset.d][+el.dataset.s]=el.value;budget()});
+  view().querySelectorAll('[data-preset]').forEach(b=>b.onclick=()=>{p.plan=PRESETS[b.dataset.preset].map(d=>d.slice());renderLife()});
+  $('#pl-groc').onchange=e=>{p.grocery=e.target.value;budget()};
+  $('#pl-go').onclick=liveWeek;
+  $('#pl-combos').onclick=comboNotebook;
+  $('#pl-settings').onclick=()=>{S.settings.roundLen=S.settings.roundLen===60?180:S.settings.roundLen===180?30:60;save();renderLife()};
+  $('#bl-tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;bodyLayer=b.dataset.l;renderLife()};
+  budget();drawBody();
+  const lg=$('#lifelog');lg.scrollTop=lg.scrollHeight;
+}
+function weekCosts(p){
+  let inc=0,gym=false,dues=25,spend=0;
+  for(const d of p.plan)for(const a of d){const A=ACT[a];if(A.money>0)inc+=A.money;else if(A.money<0)spend-=A.money;if(A.gym)gym=true;if(A.dues)dues-=A.dues}
+  return{inc,out:140+20+GROCERY[p.grocery].cost+spend+(gym?Math.max(0,dues):0),gym};
+}
+function budget(){const p=S.p,c=weekCosts(p);$('#pl-budget').innerHTML=`In ~$${c.inc} · Out ~$${c.out}<br>Rent $140 · Mina $20${c.gym?' · Gym dues':''} · Food $${GROCERY[p.grocery].cost}<br><span style="color:${p.money+c.inc-c.out<0?'var(--blood)':'var(--ok)'}">End of week ≈ $${Math.round(p.money+c.inc-c.out)}</span>`}
+function drawBody(){
+  const p=S.p,cv=$('#bodycv');if(!cv)return;const D=anatomyData(p,false);drawAnatomy(cv,D,bodyLayer);
+  const sk=p.body.skel,m=p.body.muscle,o=p.body.organs;
+  const rows=bodyLayer==='skeleton'?[['Skull',sk.skull],['Jaw',sk.jaw],['Nose',sk.nose],['Orbitals',sk.orbital],['Ribs',sk.ribs],['L hand',sk.handL],['R hand',sk.handR],['Bone density',sk.density]]
+    :bodyLayer==='muscle'?[['Neck',m.neck],['Shoulders',m.shoulders],['Core',m.core],['Back',m.back],['Legs',m.legs],['Arms',m.arms]]
+    :[['Brain',o.brain],['Heart (cardio)',o.heart],['Lungs',o.lungs],['Liver',o.liver],['Kidneys',o.kidneys]];
+  $('#bodyread').innerHTML=rows.map(([k,v])=>`<span>${k} <b style="color:${bodyLayer==='muscle'?'var(--canvas)':healthCol(v)}">${Math.round(v)}</b></span>`).join('')+
+    `<span class="dim" style="font-size:11px">Weight ${r1(p.weight)} kg · ${weightClass(p.weight)}</span>`;
+}
+
+/* ---------------------------- LIFE SIMULATION ---------------------------- */
+function effTrain(p){return clamp((1-p.fatigue/140)*(1-p.sleepDebt/40)*(p.nutrition<45?.55:1)*(p.stress>75?.8:1),.1,1.15)}
+function gain(obj,k,amt){obj[k]=clamp(obj[k]+amt*(1-obj[k]/115),0,100)}
+function hasInjury(p,part){return p.injuries.some(i=>i.part===part)}
+function addInjury(p,inj,L){
+  const ex=p.injuries.find(i=>i.part===inj.part);
+  if(ex){ex.days+=inj.days/2}else p.injuries.push(Object.assign({},inj));
+  if(inj.skel)for(const k in inj.skel)p.body.skel[k]=clamp(p.body.skel[k]-inj.skel[k],5,100);
+  if(inj.brain)p.body.organs.brain=clamp(p.body.organs.brain-inj.brain,10,100);
+  L(`Injury: ${inj.n}.`,'bad');
+}
+const INJ={
+  spar:[{n:'Broken nose (sparring)',part:'nose',days:14,skel:{nose:35}},{n:'Swollen eye',part:'orbital',days:7,skel:{orbital:20}},{n:'Concussion',part:'brain',days:14,brain:2},{n:'Bruised ribs',part:'ribs',days:10,skel:{ribs:25}}],
+  dock:[{n:'Strained lower back',part:'back',days:10},{n:'Crushed hand on a crate',part:'hand',days:21,skel:{handR:35}}],
+  bag:[{n:'Sprained wrist',part:'hand',days:10,skel:{handR:15}}],
+  street:[{n:'Busted knuckles',part:'hand',days:14,skel:{handL:25}}],
+};
+function doAct(p,k,L,day){
+  const A=ACT[k],eff=effTrain(p);
+  if(A.train&&p.fatigue>92){L(`${ACT[k].n}: too wrecked to do anything useful. You go through the motions.`,'bad');p.fatigue+=4;return}
+  if(A.g){const tgt=Object.assign({},p.body.muscle,p.body.organs);for(const[s,v]of Object.entries(A.g)){if(s in p.body.muscle)gain(p.body.muscle,s,v*eff*(p.nutrition<40?.3:1));else gain(p.body.organs,s,v*eff)}}
+  if(A.sk)for(const[s,v]of Object.entries(A.sk))gain(p.skills,s,v*eff);
+  if(A.bone&&p.nutrition>60)p.body.skel.density=clamp(p.body.skel.density+A.bone,0,100);
+  if(A.brain){const loss=-A.brain*(1-p.skills.defense/200);p.body.organs.brain=clamp(p.body.organs.brain-loss,10,100);p.body.organs.brainCap=clamp(p.body.organs.brainCap-loss*.3,30,100)}
+  if(A.hand&&hasInjury(p,'hand')){p.injuries.find(i=>i.part==='hand').days+=2;L('Your hand screams on the bag. You are making it worse.','bad')}
+  if(A.fat)p.fatigue=clamp(p.fatigue+A.fat*(A.train&&p.nutrition<40?1.2:1),0,100);
+  if(A.stress)p.stress=clamp(p.stress+A.stress,0,100);
+  if(A.money)p.money+=A.money;
+  if(A.nutr)p.nutrition=clamp(p.nutrition+A.nutr,0,100);
+  if(A.dues)p._dues=(p._dues||0)+A.dues;
+  if(A.gym)p._gym=true;
+  if(A.train)p._trained=(p._trained||0)+1;
+  if(A.g&&(A.g.heart||A.g.lungs))p._cardio=true;
+  if(A.bond)for(const[w,v]of Object.entries(A.bond)){p.rel[w].bond=clamp(p.rel[w].bond+v,0,100);p._saw[w]=true}
+  if(k==='mina'||k==='rosa')p._saw[k]=true;
+  if(k==='mitts'||k==='spar'||k==='bag'||k==='rope')p._saw.pop=true;
+  if(A.risk){const risk=A.risk*(1+p.fatigue/45+p.sleepDebt/18)*(k==='spar'?(1-p.skills.defense/250):1);
+    if(Math.random()<risk)addInjury(p,pick(INJ[k]||INJ.dock),L)}
+  if(k==='spar'&&Math.random()<.18){p.rel.dex.bond=clamp(p.rel.dex.bond+3,0,100);L('Word gets back that Dex watched your sparring from the door and laughed.','')}
+  if(A.liver)p.body.organs.liver=clamp(p.body.organs.liver+A.liver,20,100);
+}
+function nightAndBody(p,k,L){
+  const A=ACT[k];doAct(p,k,()=>{});
+  const h=A.sleep;
+  const q=p.stress>70?.7:1;
+  if(h>=8)p.sleepDebt=Math.max(0,p.sleepDebt-2.5*q);else p.sleepDebt=clamp(p.sleepDebt+(8-h)*.8,0,40);
+  p.fatigue=clamp(p.fatigue-h*3.6*q*(p.nutrition<40?.75:1),0,100);
+  const tgt=GROCERY[p.grocery].target;p.nutrition=clamp(p.nutrition+(tgt-p.nutrition)*.25,0,100);
+  p.stress=clamp(p.stress+(30-p.stress)*.05+(p.money<0?4:0)+(p.sleepDebt>12?2:0),0,100);
+  if(p.nutrition<40){for(const m in p.body.muscle)p.body.muscle[m]=Math.max(10,p.body.muscle[m]-.15);p.body.skel.density=Math.max(30,p.body.skel.density-.05)}
+  if(!p._cardio){p.body.organs.heart=Math.max(15,p.body.organs.heart-.05);p.body.organs.lungs=Math.max(15,p.body.organs.lungs-.04)}
+  const heal=(p.nutrition/70)*(p.sleepDebt<6?1:.55);
+  for(const i of p.injuries)i.days-=heal*(p._trained&&['hand','ribs','nose','back'].includes(i.part)?.7:1);
+  const healed=p.injuries.filter(i=>i.days<=0);p.injuries=p.injuries.filter(i=>i.days>0);healed.forEach(i=>L(`Healed: ${i.n}.`,'good'));
+  for(const b of['skull','jaw','nose','orbital','ribs','handL','handR'])if(!p.injuries.some(i=>i.part===b||(b.startsWith('hand')&&i.part==='hand')))p.body.skel[b]=Math.min(100,p.body.skel[b]+.9*heal);
+  p.body.organs.brain=Math.min(p.body.organs.brainCap,p.body.organs.brain+.06*heal);
+  p.body.organs.liver=Math.min(100,p.body.organs.liver+.5);
+  p.weight=clamp(p.weight+(p.nutrition-58)/900-(p._trained||0)*.012,50,95);
+  for(const w of['mina','rosa','pop'])if(!p._saw[w])p.rel[w].bond=Math.max(0,p.rel[w].bond-(w==='pop'?.25:.45));
+}
+
+/* ---------------------------- EVENTS ---------------------------- */
+const EVENTS=[
+  {id:'trip',cond:p=>p.week>=1,who:'Mina',text:'Mina slides a permission slip across the table. A school trip to the aquarium, $30. She says she doesn\'t really want to go. She is lying.',
+    ch:[{t:'Pay it ($30)',f:p=>{p.money-=30;p.rel.mina.bond+=8;return'She hugs you hard enough to hurt your ribs.'}},
+        {t:'"Not this month."',f:p=>{p.rel.mina.bond-=6;p.stress+=6;return'She says it\'s fine. She goes to her room and doesn\'t come out.'}}]},
+  {id:'dexspar',cond:p=>p.week>=2,who:'Dex',text:'Dex Calloway walks into Halloran\'s like he owns it, gold medal on a chain. "Heard the dockrat thinks he\'s a fighter. Two rounds. Unless you\'re scared."',
+    ch:[{t:'Glove up',f:p=>{const d=p.skills.defense;const hurt=Math.random()<.6-d/200;gain(p.skills,'ringIQ',3);gain(p.skills,'defense',2);p.rel.dex.bond+=12;p.fatigue+=15;
+          if(hurt){p.body.organs.brain-=1.5;p.body.skel.nose-=15;return'He is faster than anything you have seen. You eat jabs for six minutes and land one right hand. He stops smiling for exactly one second. You learn more than in a month.'}
+          return'You make him miss. Once, twice. He gets serious and drops you with a check hook. But he is breathing hard when it\'s over.'}},
+        {t:'"Not today."',f:p=>{p.rel.dex.bond+=6;p.rel.pop.bond+=2;p.stress+=5;return'Dex laughs on his way out. Pop grunts: "Smart. Doesn\'t feel smart, does it."'}}]},
+  {id:'walkhome',cond:p=>p.rel.rosa.bond>=25,who:'Rosa',text:'The diner closes late. Rosa is waiting by the door with her coat on, sketchbook under her arm. "Walk me home? The streetlight on Pier Road is out again."',
+    ch:[{t:'Walk her home',f:p=>{p.rel.rosa.bond+=7;p.sleepDebt+=1.5;p.stress-=6;return'She shows you a drawing of you shadowboxing on the dock at dawn. You didn\'t know anyone saw.'}},
+        {t:'"Roadwork at five. Sorry."',f:p=>{p.rel.rosa.bond-=4;return'"Sure. The fighter." She smiles like she means it, mostly.'}}]},
+  {id:'popknee',cond:p=>p.week>=2,who:'Pop',text:'You find Pop on the gym floor, his bad knee locked. He waves you off. "I\'m fine. Go hit the bag." He is not fine.',
+    ch:[{t:'Get him to the clinic',f:p=>{p.rel.pop.bond+=10;p.money-=20;p.fatigue+=5;return'In the cab he tells you about the fighter he trained in \'89 who could have been champion. He doesn\'t say what happened. "Don\'t waste it, kid."'}},
+        {t:'Respect his pride, train',f:p=>{p.rel.pop.bond-=3;gain(p.skills,'straight',1);return'You hit the bag. Pop limps to his office. Neither of you talks about it.'}}]},
+  {id:'overtime',cond:p=>true,who:'Foreman',text:'The dock foreman catches you at the gate. "Ship came in early. Double shift Saturday, $90 cash. You in?"',
+    ch:[{t:'Take the money',f:p=>{p.money+=90;p.fatigue+=20;p.sleepDebt+=2;if(Math.random()<.2){addInjury(p,INJ.dock[0],()=>{});return'$90 and a back that pops when you bend over.'}return'$90. Your legs are concrete.'}},
+        {t:'Pass',f:p=>'"Your loss." It always is.'}]},
+  {id:'street',cond:p=>p.rel.rosa.bond>=20||p.rel.mina.bond>=40,who:'Pier Road',text:'Two drunks outside the corner store are hassling Mina on her way home. One grabs her bag.',
+    ch:[{t:'Put them down',f:p=>{p.rel.mina.bond+=6;p.rel.pop.bond-=5;if(Math.random()<.5){addInjury(p,INJ.street[0],()=>{});return'Two punches. Two drunks on the pavement. Your knuckles split to the bone. Pop sees the hand and goes very quiet. "Your fists are for the ring."'}return'One shove, one hook. They run. Mina won\'t stop talking about it.'}},
+        {t:'Get her out of there',f:p=>{p.stress+=6;p.rel.mina.bond+=2;return'You take her arm and walk fast. Your hands shake for an hour.'}}]},
+  {id:'sick',cond:p=>p.week>=2,who:'Mina',text:'Mina is burning up with fever. The pharmacy wants $40 for the medicine the clinic prescribed.',
+    ch:[{t:'Buy it ($40)',f:p=>{p.money-=40;p.rel.mina.bond+=5;p.sleepDebt+=2;return'You sit up with her all night. By morning the fever breaks.'}},
+        {t:'Ride it out with soup',f:p=>{p.stress+=10;p.sleepDebt+=4;if(Math.random()<.5){p.rel.mina.bond-=4;return'Three bad nights. She recovers. You don\'t sleep.'}return'It passes in two days. You were lucky.'}}]},
+  {id:'gloves',cond:p=>p.week>=3&&!p.flags.dad,who:'Storage locker',text:'Clearing the storage locker, you find them: your father\'s gloves. Cracked leather, his initials inked on the cuff. He fought twelve times and never got a real shot.',
+    ch:[{t:'Hang them by the door',f:p=>{p.flags.dad=true;p.stress-=5;return'Every morning on the way out to roadwork, you touch them.'}},
+        {t:'Leave them in the box',f:p=>{p.stress+=3;return'Some things are too heavy.'}}]},
+  {id:'tape',cond:p=>p.rel.pop.bond>=30,who:'Pop',text:'Pop pulls an old VHS from his desk. "Watch this. Watch his feet, not his hands." It\'s a fighter you\'ve never heard of, moving like water.',
+    ch:[{t:'Watch it ten times',f:p=>{gain(p.skills,'ringIQ',5);gain(p.skills,'footwork',3);p.rel.pop.bond+=4;p.sleepDebt+=2;return'At 2am you understand something about distance that you can\'t put into words.'}},
+        {t:'Watch it once',f:p=>{gain(p.skills,'ringIQ',1.5);return'"You saw it?" "I saw it." Pop doesn\'t believe you.'}}]},
+  {id:'drinks',cond:p=>p.stress>55,who:'The crew',text:'The dock crew is heading to the Anchor after shift. "Come on, champ. One drink. You look like hell."',
+    ch:[{t:'One drink (it\'s never one)',f:p=>{p.stress-=15;p.money-=20;p.body.organs.liver-=3;p.sleepDebt+=3;p.nutrition-=5;return'You laugh for the first time in weeks. You wake up at noon with a head like a bell.'}},
+        {t:'Go home',f:p=>{p.stress+=2;return'You eat cold rice standing at the sink.'}}]},
+];
+function maybeEvent(p){
+  if(p._events>=2||Math.random()>.2)return null;
+  const pool=EVENTS.filter(e=>e.cond(p)&&(!p.seen[e.id]||p.week-p.seen[e.id]>=4));
+  if(!pool.length)return null;const e=pick(pool);p.seen[e.id]=p.week;p._events=(p._events||0)+1;return e;
+}
+function showEvent(e,done){
+  showModal(`<span class="speaker">${esc(e.who).toUpperCase()}</span><div class="scene">${esc(e.text)}</div><div class="choices">${e.ch.map((c,i)=>`<button data-i="${i}">${esc(c.t)}</button>`).join('')}</div>`);
+  $('#modalbox').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const r=e.ch[+b.dataset.i].f(S.p);clampAll(S.p);
+    showModal(`<span class="speaker">${esc(e.who).toUpperCase()}</span><div class="scene">${esc(r)}</div><button class="primary" id="m-ok">Continue</button>`);$('#m-ok').onclick=()=>{closeModal();done(r)}})
+}
+function clampAll(p){for(const r of Object.values(p.rel))r.bond=clamp(r.bond,0,100);p.stress=clamp(p.stress,0,100);p.fatigue=clamp(p.fatigue,0,100);p.nutrition=clamp(p.nutrition,0,100);p.sleepDebt=clamp(p.sleepDebt,0,40);
+  for(const k in p.body.skel)p.body.skel[k]=clamp(p.body.skel[k],5,100);for(const k in p.body.organs)p.body.organs[k]=clamp(p.body.organs[k],5,100)}
+
+function liveWeek(){
+  const p=S.p;p._events=0;p._gym=false;p._dues=0;
+  const L=(t,c)=>{p.log.push({t,c});const lg=$('#lifelog');if(lg){const d=document.createElement('div');d.className=c||'';d.textContent=t;lg.appendChild(d);lg.scrollTop=lg.scrollHeight}};
+  L(`— Week ${p.week} —`,'d');
+  $('#pl-go').disabled=true;
+  let d=0;
+  const fightDays=p.fight&&p.fight.weeks===0?5:7;
+  const step=()=>{
+    if(d>=fightDays)return endWeek(L);
+    p._saw={};p._trained=0;p._cardio=false;
+    const plan=p.plan[d],before={f:p.fatigue,s:p.sleepDebt};
+    for(let s=0;s<3;s++)doAct(p,plan[s],L,d);
+    nightAndBody(p,plan[3],L);clampAll(p);
+    let line=`${DAYS[d]}: ${plan.slice(0,3).map(k=>ACT[k].n).join(', ')}; ${ACT[plan[3]].n.toLowerCase()}.`;
+    if(p.fatigue>85)line+=' Your legs feel like wet sand.';else if(p.sleepDebt>12)line+=' You keep nodding off on the bus.';else if(p.nutrition<35)line+=' Dizzy in the shower.';
+    L(line,p.fatigue>85||p.sleepDebt>12?'bad':'');
+    d++;
+    const e=maybeEvent(p);
+    if(e)showEvent(e,r=>{L(`${e.who}: ${r}`,'');setTimeout(step,120)});
+    else setTimeout(step,140);
+  };
+  step();
+}
+function endWeek(L){
+  const p=S.p,c=weekCosts(p);
+  const dues=p._gym?Math.max(0,25-(p._dues||0)):0;
+  p.money-=140+20+GROCERY[p.grocery].cost+dues;
+  L(`Sunday bills: rent $140, Mina $20, food $${GROCERY[p.grocery].cost}${dues?`, gym $${dues}`:''}. Cash: $${Math.round(p.money)}.`,p.money<0?'bad':'d');
+  if(p.money<0){p.stress=clamp(p.stress+8,0,100);L('You are behind. The landlord leaves a note on the door.','bad')}
+  if(p.money<-150&&!p.flags.loan){p.flags.loan=true;p.money+=200;p.rel.pop.bond+=4;L('Pop presses $200 into your hand without a word. "Pay me back with a win."','good')}
+  const fightNow=p.fight&&p.fight.weeks===0;
+  const after=()=>{p.week++;save();if(fightNow){weighIn()}else renderLife()};
+  if(p.fight&&!fightNow)p.fight.weeks--;
+  if(!p.fight&&!fightNow){
+    if(p.fightsDone===0&&p.week>=4&&(!p.flags.declinedWeek||p.week-p.flags.declinedWeek>=2))return theCall(after);
+    if(p.fightsDone>0&&p.week-(p.lastFightWeek||0)>=2)return fightOffer(after);
+  }
+  after();
+}
+function theCall(done){
+  const o=OPPS[0];
+  showModal(`<span class="speaker">POP · 11:40 PM</span><div class="scene"><p>The phone at the gym rings while you are sweeping. Pop listens for a long time.</p><br>
+  <p><b>Pop:</b> "Some promoter's kid broke his hand. Saturday after next, four-round undercard at the Riverside Armory. Three rounds if you're green, and kid, you are green. Opponent's ${esc(o.name)}. ${esc(o.blurb)} Four hundred dollars."</p><br>
+  <p>He covers the phone. "I'm not gonna tell you you're ready. Nobody is ever ready. You want it or not?"</p></div>
+  <div class="choices"><button class="primary" id="c-yes">"I want it."</button><button id="c-no">"I need more time."</button></div>`);
+  $('#c-yes').onclick=()=>{S.p.fight={opp:0,weeks:1};S.p.rel.pop.bond+=5;closeModal();done()};
+  $('#c-no').onclick=()=>{S.p.rel.pop.bond-=4;S.p.flags.declinedWeek=S.p.week;showModal(`<div class="scene"><b>Pop:</b> "...Fine. Chances like this don't come twice, kid. Maybe three times if you're lucky." He hangs up and doesn't look at you for the rest of the night.</div><button class="primary" id="m-ok">Continue</button>`);$('#m-ok').onclick=()=>{closeModal();done()}};
+}
+function fightOffer(done){
+  const i=S.p.fightsDone,o=oppData(i);S.p._nextOpp=o;
+  showModal(`<span class="speaker">POP</span><div class="scene"><b>Pop:</b> "Got a call. ${esc(o.name)}, ${esc(o.rec)}. ${STYLES[o.style].name}. ${esc(o.blurb)} ${o.rounds} rounds, $${o.purse}. Three weeks out."${o.rival?'<br><br>He sets the phone down. "It\'s Calloway, kid. He asked for you by name."':''}</div>
+  <div class="choices"><button class="primary" id="c-yes">Take the fight</button><button id="c-no">Not yet. Heal up.</button></div>`);
+  $('#c-yes').onclick=()=>{S.p.fight={opp:i,weeks:2,data:o};closeModal();done()};
+  $('#c-no').onclick=()=>{closeModal();done()};
+}
+
+/* ---------------------------- COMBO NOTEBOOK ---------------------------- */
+function comboNotebook(){
+  const p=S.p;
+  const opt=v=>`<option value="">—</option>`+ALL_ACTS.map(k=>`<option value="${k}"${v===k?' selected':''}>${TECH[k].n}</option>`).join('');
+  showModal(`<h2>Combo notebook</h2><p class="dim">Combos fire one second per step. Opponents learn your habits, so a combo you lean on gets read. You can break off mid-combo at any second.</p>
+  <div class="log" style="max-height:220px">${p.combos.map((c,i)=>`<div class="row" style="justify-content:space-between"><span>${esc(c.n)}: <span class="dim">${c.s.map(k=>TECH[k].n).join(' → ')}</span></span><button data-del="${i}" style="font-size:10px;padding:3px 6px">Delete</button></div>`).join('')}</div>
+  <h3>New combo</h3><label>Name<input type="text" id="cb-name" maxlength="28" placeholder="e.g. Pier Road special"></label>
+  <div class="row">${[0,1,2,3,4].map(i=>`<select id="cb-${i}" style="width:auto;flex:1;min-width:110px">${opt(i<2?['jab','cross'][i]:'')}</select>`).join('')}</div>
+  <div class="row"><button class="primary" id="cb-add">Save combo</button><button id="cb-close">Close</button></div>`);
+  $('#modalbox').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{p.combos.splice(+b.dataset.del,1);comboNotebook()});
+  $('#cb-add').onclick=()=>{const s=[0,1,2,3,4].map(i=>$('#cb-'+i).value).filter(Boolean);if(!s.length)return;
+    p.combos.push({n:$('#cb-name').value.trim()||s.map(k=>TECH[k].n).join('-'),s});save();comboNotebook()};
+  $('#cb-close').onclick=()=>{closeModal();if(S.screen==='life')renderLife()};
+}
+
+/* ---------------------------- WEIGH-IN ---------------------------- */
+function weighIn(){
+  const p=S.p,o=p.fight.data||oppData(p.fight.opp);
+  const limit=p.classLimit||classLimit(p.weight),over=p.weight>limit+.5?r1(p.weight-limit):0;
+  const body=[];if(p.sleepDebt>10)body.push('You haven\'t slept properly in days.');if(p.fatigue>60)body.push('Your legs are heavy from camp.');if(p.nutrition<40)body.push('You have been living on noodles; your cheeks are hollow.');if(p.injuries.length)body.push('You are carrying: '+p.injuries.map(i=>i.n.toLowerCase()).join(', ')+'.');
+  showModal(`<span class="speaker">WEIGH-IN · RIVERSIDE ARMORY</span><div class="scene">
+   <p>${esc(o.name)} stares at you across the scale. ${o.rival?'Dex leans in: "I\'ll make it quick, dockrat. Professional courtesy."':''}</p><br>
+   <p>Contract weight ${limit} kg. You step on: <b class="mono">${r1(p.weight)} kg</b>.${over?` <span style="color:var(--blood)">${over} kg over.</span>`:' On weight.'}</p>
+   ${body.length?`<br><p class="dim">${body.join(' ')}</p>`:''}</div>
+   <div class="choices">${over?`<button id="w-cut">Sweat it off overnight (dehydrated: less gas, weaker chin)</button><button id="w-fine">Pay the fine (lose 20% of purse)</button>`:'<button class="primary" id="w-go">Walk to the ring</button>'}</div>`);
+  const go=()=>{closeModal();startFight()};
+  if(over){$('#w-cut').onclick=()=>{p._cut=over;go()};$('#w-fine').onclick=()=>{p._fine=.2;go()}}else $('#w-go').onclick=go;
+}
+
+/* ---------------------------- FIGHT ---------------------------- */
+let FX=null;const ANIM=620;
+function startFight(){
+  const p=S.p,o=p.fight.data||oppData(p.fight.opp);
+  const A=fighterFromPlayer(p),B=fighterFromOpp(o);
+  if(p._cut){A.stamMax=Math.round(A.stamMax*(1-p._cut*.06));A.stamina=A.stamMax;A.chin*=1-p._cut*.05}
+  FX={A,B,o,range:2,dist:60,round:1,clock:0,roundLen:S.settings.roundLen,rounds:p.fightsDone===0?3:o.rounds,phase:'choose',queue:[],queueName:'',auto:0,
+    log:[],model:{g:{},n:{},prev:'_'},oppModel:{g:{},n:{},prev:'_'},kdRound:{A:0,B:0},rs:newRS(),cards:[],judges:[{dmg:1,vol:.6},{dmg:1.3,vol:.3},{dmg:.8,vol:1}],
+    poses:{A:SPOSE.neutral,B:SPOSE.neutral},prevPoses:{A:SPOSE.neutral,B:SPOSE.neutral},anim:null,fx:[],shake:0,flash:{A:0,B:0},memUsed:{},hitInfo:null,inspect:'B',layer:'hitbox',oppActsRound:{},banner:null};
+  S.screen='fight';topStats();renderFight();
+  flog(`Round 1. ${A.name} vs ${B.name}. ${FX.rounds} rounds of ${FX.roundLen} seconds.`,'d');
+  nextSecond();requestAnimationFrame(fightLoop);
+}
+function newRS(){return{A:{landed:0,thrown:0,dmg:0},B:{landed:0,thrown:0,dmg:0}}}
+function flog(t,c){if(!FX)return;FX.log.push({t,c});const el=$('#flog');if(el){const d=document.createElement('div');d.className=c||'';d.textContent=t;el.appendChild(d);el.scrollTop=el.scrollHeight}}
+function renderFight(){
+  const F=FX,p=S.p;
+  const grp=(title,keys)=>`<div class="grp"><span>${title}</span><div class="btns">${keys.map(k=>`<button data-act="${k}" id="act-${k}">${TECH[k].n}<kbd>${TECH[k].key}</kbd></button>`).join('')}</div></div>`;
+  view().innerHTML=`<div class="stage"><canvas id="ring" class="px" width="320" height="180"></canvas>
+    <div class="hud">
+      <div class="side"><span class="nm" id="h-an"></span>
+        <div class="hb" title="Stamina"><i id="h-as" style="background:var(--gold)"></i></div>
+        <div class="hb" title="Head damage"><i id="h-ah" style="background:var(--blood)"></i></div>
+        <div class="hb" title="Body (liver) damage"><i id="h-ab" style="background:#c46a8a"></i></div>
+        <div class="hb" title="Resolve"><i id="h-ar" style="background:var(--bruise)"></i></div></div>
+      <div class="clock"><div id="h-rd"></div><div id="h-ck" class="mono" style="font-size:18px"></div><div id="h-rg" style="font-size:9px;color:var(--canvas)"></div></div>
+      <div class="side r"><span class="nm" id="h-bn"></span>
+        <div class="hb"><i id="h-bs" style="background:var(--gold)"></i></div>
+        <div class="hb"><i id="h-bh" style="background:var(--blood)"></i></div>
+        <div class="hb"><i id="h-bb" style="background:#c46a8a"></i></div></div>
+    </div><div class="banner" id="banner" hidden></div></div>
+  <div class="read" id="read"></div>
+  <div class="grid2">
+    <section class="panel pad" id="pad">
+      ${grp('Punches',PUNCHES)}${grp('Defense',['high','low','slip','duck','pull','clinch'])}${grp('Feet & mind',['in','out','circle','feint'])}
+      <div class="grp"><span>Combos <span class="combo-q" id="cq"></span></span><div class="btns" id="combos">${p.combos.map((c,i)=>`<button data-combo="${i}" title="${esc(c.s.map(k=>TECH[k].n).join(' → '))}">${esc(c.n)}</button>`).join('')}</div></div>
+      <div class="row"><button id="b-break">Break off combo</button><button id="b-auto">Instinct: 5 seconds</button></div>
+    </section>
+    <aside class="panel">
+      <div class="row" style="justify-content:space-between"><h3>X-ray</h3>
+        <div class="tabs" id="ins-who"><button data-w="B" class="sel">${esc(F.B.short)}</button><button data-w="A">You</button></div></div>
+      <div class="tabs" id="ins-layer">${['hitbox','skeleton','muscle','organs'].map(l=>`<button data-l="${l}" class="${l===F.layer?'sel':''}">${l}</button>`).join('')}</div>
+      <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;align-items:start">
+        <canvas id="xray" class="px" width="96" height="128"></canvas>
+        <div id="xread" style="font-size:12.5px;display:flex;flex-direction:column;gap:4px"></div>
+      </div>
+      <div class="log" id="flog" style="max-height:220px"></div>
+    </aside>
+  </div>`;
+  $('#pad').onclick=e=>{const b=e.target.closest('button');if(!b||b.disabled)return;
+    if(b.dataset.act){FX.queue=[];FX.auto=0;submit(b.dataset.act)}
+    else if(b.dataset.combo){const c=p.combos[+b.dataset.combo];FX.queue=c.s.slice(1);FX.queueName=c.n;FX.auto=0;submit(c.s[0],true)}};
+  $('#b-break').onclick=()=>{FX.queue=[];FX.auto=0;updateHUD()};
+  $('#b-auto').onclick=()=>{FX.auto=5;FX.queue=[];if(FX.phase==='choose')submit(aiChoose(FX.A,FX.B,FX.range,FX.oppModel),true)};
+  $('#ins-who').onclick=e=>{const b=e.target.closest('button');if(!b)return;FX.inspect=b.dataset.w;$('#ins-who').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b));drawXray()};
+  $('#ins-layer').onclick=e=>{const b=e.target.closest('button');if(!b)return;FX.layer=b.dataset.l;$('#ins-layer').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b));drawXray()};
+  updateHUD();drawXray();
+}
+document.addEventListener('keydown',e=>{
+  if(S.screen!=='fight'||!FX||FX.phase!=='choose'||!$('#modal').hidden)return;if(e.target.tagName==='INPUT')return;
+  const k=ALL_ACTS.find(a=>TECH[a].key===e.key.toLowerCase());if(k){const b=$('#act-'+k);if(b&&!b.disabled){FX.queue=[];FX.auto=0;submit(k)}}
+});
+function updateHUD(){
+  const F=FX;if(!F||!$('#h-an'))return;const A=F.A,B=F.B;
+  $('#h-an').textContent=A.short+(A.limit?' · PAST THE LIMIT':'');$('#h-bn').textContent=B.short;
+  const w=(id,v)=>{const el=$(id);if(el)el.style.width=clamp(v*100,0,100)+'%'};
+  w('#h-as',A.stamina/A.stamMax);w('#h-ah',A.shock/A.chin);w('#h-ab',A.liverLoad/A.liverMax);w('#h-ar',A.resolve/100);
+  w('#h-bs',B.stamina/B.stamMax);w('#h-bh',B.shock/B.chin);w('#h-bb',B.liverLoad/B.liverMax);
+  const left=Math.max(0,F.roundLen-F.clock);$('#h-rd').textContent=`ROUND ${F.round}/${F.rounds}`;$('#h-ck').textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;
+  $('#h-rg').textContent=['INSIDE','MID RANGE','LONG RANGE'][F.range]+(F.clinched?' · CLINCH':'');
+  const t=F.tell;
+  $('#read').innerHTML=F.phase==='choose'&&t?`<b>READ ${Math.round(t.conf*100)}%</b>${esc(t.text)}${A.frozen>0?' <span style="color:var(--blood)">You are stunned. This second is lost.</span>':''}`:`<b>…</b>${F.phase==='kd'?'The referee is counting.':F.phase==='end'?'It\'s over.':'Exchange.'}`;
+  $('#cq').textContent=F.queue.length?`${F.queueName}: next ${F.queue.map(k=>TECH[k].n).join(' → ')}`:F.auto?`instinct ${F.auto}s`:'';
+  for(const k of ALL_ACTS){const b=$('#act-'+k);if(!b)continue;const legal=legalActs(F.range).includes(k);
+    b.disabled=F.phase!=='choose'||!legal;b.classList.toggle('far',TECH[k].kind==='punch'&&!TECH[k].ranges.includes(F.range))}
+  document.querySelectorAll('[data-combo]').forEach(b=>b.disabled=F.phase!=='choose');
+}
+function drawXray(){
+  const F=FX,cv=$('#xray');if(!F||!cv)return;const X=F[F.inspect];
+  drawAnatomy(cv,anatomyData(X,true),F.layer,F.hitInfo&&F.hitInfo.def===F.inspect?F.hitInfo:{pose:poseOf('neutral',{defSouthpaw:X.southpaw})});
+  const b=X.bone,rows=[];
+  rows.push(`<span>Head <b style="color:${healthCol(100-X.shock/X.chin*100)}">${Math.round(X.shock/X.chin*100)}%</b> of chin</span>`);
+  rows.push(`<span>Liver <b style="color:${healthCol(100-X.liverLoad/X.liverMax*100)}">${Math.round(X.liverLoad/X.liverMax*100)}%</b></span>`);
+  rows.push(`<span>Gas <b>${Math.round(X.stamina)}</b>/${X.stamMax}</span>`);
+  const inj=[];if(b.nose>40)inj.push('broken nose');if(b.orbital>45||X.swell>60)inj.push('eye closing');if(b.ribs>45)inj.push('cracked ribs');if(b.jaw>50)inj.push('jaw damaged');if(b.handL>55)inj.push('left hand broken');if(b.handR>55)inj.push('right hand broken');if(X.bleed>0)inj.push('bleeding');
+  rows.push(`<span class="dim">${inj.length?inj.join(', '):'No structural damage yet'}</span>`);
+  if(F.layer==='hitbox'&&F.hitInfo)rows.push(`<span class="dim">Last: ${esc(F.hitInfo.txt)}</span>`);
+  $('#xread').innerHTML=rows.join('');
+}
+function nextSecond(){
+  const F=FX;if(!F||F.phase==='end')return;
+  if(F.clinched){F.clinched=false;F.range=1;flog('Referee: "Break!"','dim')}
+  F.intent=aiChoose(F.B,F.A,F.range,F.model);
+  F.tell=makeTell(F,F.A,F.intent);
+  F.phase='choose';updateHUD();
+  if(F.A.frozen>0){setTimeout(()=>{if(FX===F&&F.phase==='choose')submit('high',true)},700);return}
+  if(F.auto>0){F.auto--;setTimeout(()=>{if(FX===F&&F.phase==='choose')submit(aiChoose(F.A,F.B,F.range,F.oppModel),true)},380);return}
+  if(F.queue.length){setTimeout(()=>{if(FX===F&&F.phase==='choose'&&F.queue.length){const k=F.queue.shift();if(!legalActs(F.range).includes(k)){F.queue=[];updateHUD();return}submit(k,true)}},420)}
+}
+function submit(a,fromQueue){
+  const F=FX;if(!F||F.phase!=='choose')return;
+  F.phase='anim';
+  const b=F.intent,A=F.A,B=F.B;
+  const ex=computeExchange(A,a,B,b,{range:F.range});
+  const aEff=ex.acts.A,bEff=ex.acts.B;
+  applyExchange(F,ex,aEff,bEff);
+  if(aEff!=='frozen')updModel(F.model,a);
+  if(bEff!=='frozen')updModel(F.oppModel,b);
+  F.oppActsRound[bEff]=(F.oppActsRound[bEff]||0)+1;
+  F.prevPoses={A:F.poses.A,B:F.poses.B};
+  F.poses={A:SPOSE[aEff]||SPOSE.neutral,B:SPOSE[bEff]||SPOSE.neutral};
+  F.anim={t0:performance.now(),ex,a:aEff,b:bEff,fired:false};
+  updateHUD();
+  setTimeout(afterSecond,ANIM);
+}
+function applyExchange(F,ex,a,b){
+  const A=F.A,B=F.B,sides={A,B},acts={A:a,B:b};
+  const wasF={A:A.frozen,B:B.frozen};const newF={A:0,B:0};
+  F.range=ex.range;F.clinched=ex.clinch;
+  for(const id of['A','B']){const X=sides[id],k=acts[id],t=TECH[k];
+    let cost=t?t.cost:0;if(k==='out'&&STYLES[X.style].mods.outFree)cost=0;
+    if(t&&t.kind==='punch'){cost*=(.85+X.weight/400);F.rs[id].thrown++;const h=ex.hits.find(h=>h.att===id);if(h&&(h.res==='miss'||h.res==='short'))cost*=1.5}
+    if(X.limit)cost=Math.min(cost,0);
+    X.stamina=clamp(X.stamina-cost+X.regen*(X.bone.ribs>45?.6:1)*(X.bone.nose>40?.85:1),0,X.stamMax);
+    X.counterReady=false;X.afterDuck=false;}
+  if(ex.feint){const by=sides[ex.feint.by];newF[ex.feint.on]=1;if(by.isPlayer)by.trueRead=true;flog(`${by.short} feints. ${sides[ex.feint.on].short} bites and freezes.`,'good')}
+  for(const id of['A','B'])if(ex.evaded[id]){sides[id].counterReady=true;if(acts[id]==='duck')sides[id].afterDuck=true;flog(`${sides[id].short} ${acts[id]==='slip'?'slips it':acts[id]==='duck'?'ducks under':'pulls back from it'}. Counter ready.`,id==='A'?'good':'')}
+  F.hitInfo=null;
+  for(const h of ex.hits){
+    const X=sides[h.att],Y=sides[h.def],t=TECH[h.tech];
+    const P=h.pose||poseOf(acts[h.def],{defSouthpaw:Y.southpaw,attSouthpaw:X.southpaw,exec:1,frozen:wasF[h.def]>0,tight:STYLES[Y.style].mods.tightGuard});
+    F.hitInfo={def:h.def,pose:P,shape:shapeFor(h.tech,X.southpaw),res:h.res,txt:`${X.short}'s ${t.n.toLowerCase()}: ${h.res}${h.region?' '+REGFX[h.region].lbl:''}`};
+    if(h.res==='short'){flog(`${X.short}'s ${t.n.toLowerCase()} falls short.`,'dim');continue}
+    if(h.res==='miss'){flog(`${X.short}'s ${t.n.toLowerCase()} whiffs.`,'dim');continue}
+    if(h.res==='smothered'){flog(`${X.short}'s ${t.n.toLowerCase()} is smothered in the clinch.`,'dim');continue}
+    if(h.res==='blocked'){Y.stamina=Math.max(0,Y.stamina-h.dmg*1.2);const hk=handOf(X,h.tech);X.bone[hk]+=h.dmg*.05/X.boneF;flog(`${Y.short} blocks the ${t.n.toLowerCase()}.`,'dim');continue}
+    F.rs[h.att].landed++;F.rs[h.att].dmg+=h.dmg;
+    damage(F,X,Y,h,newF);
+  }
+  for(const id of['A','B'])sides[id].frozen=Math.max(0,wasF[id]-1)+newF[id];
+  for(const X of[A,B]){X.shock=Math.max(0,X.shock-.35);X.liverLoad=Math.max(0,X.liverLoad-.12);if(X.limit){X.limit--;if(!X.limit){X.stamina=Math.max(0,X.stamina-20);flog('The fire burns out. Everything hurts at once.','bad')}}}
+  if(A.resolve>=100&&!A.limit){A.limit=8;A.resolve=0;banner('PAST THE LIMIT');flog(`${A.short} stops feeling the punches.`,'good')}
+  // knockdowns
+  for(const id of['A','B']){const Y=sides[id];if(F.kdNow)break;
+    if(Y.shock>=Y.chin){F.kdNow={who:id,cause:'head'}}
+    else if(Y._flash){F.kdNow={who:id,cause:'flash'}}
+    else if(Y.stamina<=0&&Y._hitThis&&Math.random()<.35){F.kdNow={who:id,cause:'exhaustion'}}
+    if(Y.liverLoad>=Y.liverMax&&!Y.liverFuse&&!F.kdNow){Y.liverFuse=2;flog(`${Y.short}'s face changes. That liver shot is still travelling.`,'')}
+    Y._flash=false;Y._hitThis=false}
+}
+function damage(F,X,Y,h,newF){
+  const fx=REGFX[h.region]||{},d=h.dmg;
+  const shockMul=1+Y.bone.jaw/150;
+  const shock=d*(fx.shock||.3)*shockMul*(Y.limit?.6:1);
+  Y.shock+=shock;Y.shockTotal+=shock;
+  Y.stamina=Math.max(0,Y.stamina-d*(fx.stam||.3)-(Y.bone.ribs>45&&TECH[h.tech].target==='body'?3:0));
+  if(fx.liver)Y.liverLoad+=d*fx.liver;
+  if(fx.bone)Y.bone[fx.bone]+=d*.8/Y.boneF;
+  if(fx.swell)Y.swell+=d*fx.swell;
+  if(fx.bleed&&Y.bone.nose>30)Y.bleed=Math.min(3,Y.bleed+1);
+  if(fx.hand){const hk=handOf(X,h.tech);X.bone[hk]+=d*.35/X.boneF;if(X.bone[hk]>55&&!X['_br'+hk]){X['_br'+hk]=true;flog(`${X.short} winces. Something cracked in that ${hk==='handL'?'left':'right'} hand.`,'bad')}}
+  if(fx.wind&&Math.random()<fx.wind*d/8){newF[h.def===`A`?'A':'B']=1;flog(`${Y.short} is winded. Can't breathe.`,'')}
+  if((h.region==='chin'||h.region==='jaw'||h.region==='temple')&&h.counter&&d>=8&&Math.random()<d/50)Y._flash=true;
+  if(d>=9&&!newF[h.def]&&Math.random()<(d-8)/30&&TECH[h.tech].target==='head'){newF[h.def]=1;flog(`${Y.short} is stunned on his feet!`,'')}
+  Y._hitThis=true;
+  if(Y.isPlayer)Y.resolve=Math.min(100,Y.resolve+d*.55);if(X.isPlayer)X.resolve=Math.min(100,X.resolve+d*.25);
+  const tag=h.counter?'COUNTER! ':'';const wi=h.walkIn?' He walked right into it.':'';
+  flog(`${tag}${X.short} lands the ${TECH[h.tech].n.toLowerCase()} ${fx.lbl||''}${h.disrupted?' (half-power trade)':''}.${wi}`,X.isPlayer?'good':'bad');
+}
+function afterSecond(){
+  const F=FX;if(!F||F.phase==='end')return;
+  if(F.kdNow){const k=F.kdNow;F.kdNow=null;return knockdown(k.who,k.cause)}
+  for(const id of['A','B']){const Y=F[id];if(Y.liverFuse){Y.liverFuse--;if(!Y.liverFuse){return knockdown(id,'liver')}}}
+  F.clock++;
+  if(F.clock>=F.roundLen)return endRound();
+  nextSecond();
+}
+function banner(t){const el=$('#banner');if(!el)return;el.textContent=t;el.hidden=false;clearTimeout(banner._t);banner._t=setTimeout(()=>{el.hidden=true},1400)}
+
+/* --- knockdowns --- */
+function knockdown(who,cause){
+  const F=FX,X=F[who];F.phase='kd';F.queue=[];F.auto=0;X.kds++;F.kdRound[who]++;
+  F.downed=who;F.flashScreen=1;
+  const msg={head:'goes down!',flash:'is dropped by a flash knockdown!',liver:'folds in half. The liver shot. He can\'t breathe.',exhaustion:'collapses. Nothing left in the tank.'}[cause];
+  flog(`${X.short} ${msg}`,who==='A'?'bad':'good');banner('DOWN!');updateHUD();
+  if(F.kdRound[who]>=3){setTimeout(()=>endFight(who==='A'?'B':'A','TKO (three knockdowns)'),1200);return}
+  if(who==='A')setTimeout(playerCount,900);else setTimeout(()=>aiCount(X),900);
+}
+function riseFromKD(X,count){
+  const F=FX;X.shock*=.55;X.liverLoad*=.5;X.stamina=Math.max(X.stamina,X.stamMax*.35);X.frozen=0;
+  F.range=2;F.downed=null;F.clock=Math.min(F.roundLen-1,F.clock+count);
+  flog(`${X.short} beats the count at ${count}.`,X.isPlayer?'good':'bad');
+  if(F.clock>=F.roundLen-1){F.clock=F.roundLen;return endRound()}
+  nextSecond();
+}
+function aiCount(X){
+  const F=FX;const ch=clamp(.78+(X.chin-X.shock)/160-(X.kds-1)*.17-(X.liverLoad>X.liverMax?.15:0),.06,.95);
+  const up=Math.random()<ch,at=up?4+Math.floor(Math.random()*5):10;
+  let n=0;showModal(`<span class="speaker">REFEREE</span><div class="count" id="cnt">1</div><p class="dim" style="text-align:center">${esc(X.short)} is on the canvas.</p>`);
+  const tick=()=>{n++;$('#cnt').textContent=n;if(n>=at){setTimeout(()=>{closeModal();if(up)riseFromKD(X,at);else endFight('A','KO')},500);return}setTimeout(tick,330)};tick();
+}
+function playerCount(){
+  const F=FX,A=F.A,p=S.p;
+  const mems=Object.keys(MEMORIES).filter(k=>k!=='dad'||p.flags.dad);
+  const bondOf=k=>k==='dad'?60:p.rel[k].bond;
+  showModal(`<span class="speaker">THE CANVAS IS COLD</span><div class="count" id="cnt">1</div>
+   <p class="scene" style="text-align:center">The lights are very far away. The referee's mouth moves. Somewhere, a number.</p>
+   <p class="dim">Reach for something. Each memory can carry you once per fight. The stronger the bond, the more it gives.</p>
+   <div class="mem">${mems.map(k=>`<button data-m="${k}" ${F.memUsed[k]?'disabled':''}>${MEMORIES[k].t}<small>${k==='dex'?'rivalry':'bond'} ${Math.round(bondOf(k))}${F.memUsed[k]?' · used':''}</small></button>`).join('')}
+   <button data-m="none">Nothing but you<small>Raw will</small></button></div>
+   <button id="stay">Stay down</button>`);
+  let n=1;const tick=setInterval(()=>{if(n<3){n++;const c=$('#cnt');if(c)c.textContent=n}},600);
+  $('#modalbox').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{clearInterval(tick);const k=b.dataset.m;
+    const bond=k==='none'?0:bondOf(k);if(k!=='none')F.memUsed[k]=true;
+    const ch=clamp(.22+A.resolve/220+bond/140+(1-A.shock/A.chin)*.25-(A.kds-1)*.13-(p.body.organs.brain<70?.1:0),.05,.95);
+    const up=Math.random()<ch,at=up?Math.max(n+1,5+Math.floor(Math.random()*5)):10;
+    const line=k==='none'?'You dig for something and find only yourself.':MEMORIES[k].line;
+    $('#modalbox').innerHTML=`<div class="count" id="cnt">${n}</div><p class="scene" style="text-align:center"><i>${esc(line)}</i></p><p class="dim" style="text-align:center">Chance to beat the count: ${Math.round(ch*100)}%</p>`;
+    const step=()=>{n++;$('#cnt').textContent=n;if(n>=at){setTimeout(()=>{closeModal();if(up){A.resolve=Math.min(100,A.resolve+15+bond*.3);banner('HE\'S UP!');riseFromKD(A,at)}else endFight('B','KO')},700);return}setTimeout(step,420)};setTimeout(step,700)});
+  $('#stay').onclick=()=>{clearInterval(tick);closeModal();endFight('B','KO')};
+}
+
+/* --- rounds, corner, scoring --- */
+function scoreRound(){
+  const F=FX,rs=F.rs;
+  const card=F.judges.map(j=>{
+    const wa=rs.A.dmg*j.dmg+rs.A.landed*j.vol+(Math.random()-.5)*2,wb=rs.B.dmg*j.dmg+rs.B.landed*j.vol+(Math.random()-.5)*2;
+    let a=10,b=10;if(wa-wb>2.5)b=9;else if(wb-wa>2.5)a=9;
+    a-=F.kdRound.A;b-=F.kdRound.B;if(F.kdRound.A&&!F.kdRound.B)a=Math.min(a,10-F.kdRound.A);
+    return[a,b]});
+  F.cards.push(card);
+}
+function endRound(){
+  const F=FX;scoreRound();F.phase='corner';updateHUD();
+  flog(`End of round ${F.round}. Landed: you ${F.rs.A.landed}/${F.rs.A.thrown}, ${F.B.short} ${F.rs.B.landed}/${F.rs.B.thrown}.`,'d');
+  if(F.round>=F.rounds)return decision();
+  const A=F.A,B=F.B;
+  // doctor check
+  if(A.swell>95||A.bone.nose>90){if(Math.random()<.5)return endFight('B','TKO (doctor stoppage, cuts)')}
+  if(B.swell>95||B.bone.nose>90){if(Math.random()<.5)return endFight('A','TKO (doctor stoppage, cuts)')}
+  const top=Object.entries(F.oppActsRound).sort((a,b)=>b[1]-a[1]).slice(0,2).map(e=>e[0]);
+  const adv={overhand:'He throws that overhand right over your jab. Slip outside or duck it, then make him pay.',cross:'He\'s firing the right hand down the middle. Slip it and come back.',
+    jab:'He\'s living off the jab. Get under it, step in, go to the body.',hook:'He loves the hook. Tighten the high guard or duck under and come up with the uppercut.',
+    liver:'He\'s digging to your liver. Elbows down when he crouches.',bjab:'He\'s pawing at your body. Make him pay upstairs.',bcross:'He\'s going downstairs with the right. Elbows down.',
+    upper:'Watch the uppercut when you duck. Don\'t bend at the waist into it.',slip:'He slips everything you throw straight. Feint first, then throw the hook where he slips to.',
+    duck:'He\'s ducking. Uppercuts, kid. Meet him on the way down.',pull:'He pulls back from the head shots. Go to the body, his feet stay planted.',
+    high:'He shells up. Go around it with hooks or underneath to the body.',low:'He drops his elbows. Head\'s open.',clinch:'He\'s grabbing because he\'s tired. Step out and work the jab.',
+    in:'He keeps walking in. Time him with the jab on the way in.',out:'He backs off every time you get close. Cut off the ring, step in behind your jab.',circle:'He\'s circling to breathe. Step in on him.',feint:'He feints a lot. Don\'t bite. Stay patient.'};
+  const est=F.rs.A.dmg>F.rs.B.dmg+3?'I think you won that round.':F.rs.B.dmg>F.rs.A.dmg+3?'You lost that round. Wake up.':'Close round. Could go either way.';
+  const popB=S.p.rel.pop.bond;
+  showModal(`<span class="speaker">YOUR CORNER · 60 SECONDS</span>
+   <div class="scene"><b>Pop:</b> "${est} ${top.map(k=>adv[k]||'').join(' ')}"</div>
+   <div>${meter('Gas',A.stamina,A.stamMax,'var(--gold)')}${meter('Head',A.shock,A.chin,'var(--blood)',Math.round(A.shock/A.chin*100)+'%')}${meter('Liver',A.liverLoad,A.liverMax,'#c46a8a',Math.round(A.liverLoad/A.liverMax*100)+'%')}${meter('Eye',A.swell,100,'var(--bruise)')}</div>
+   <p class="dim">Pick one thing for the cutman and Pop to work on.</p>
+   <div class="cards">
+     <button data-c="ice">Enswell on the eye<small>Swelling down by 35.</small></button>
+     <button data-c="air">Water and breathing<small>Recover extra gas.</small></button>
+     <button data-c="cut">Close the cut<small>Stop the nose bleeding.</small></button>
+     <button data-c="talk">"Talk to me, Pop."<small>Resolve up (more with a strong bond: ${Math.round(popB)}).</small></button>
+   </div>`);
+  $('#modalbox').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
+    const c=b.dataset.c;
+    for(const X of[A,B]){X.stamina=Math.min(X.stamMax,X.stamina+(X.stamMax-X.stamina)*.6);X.shock*=.5;X.liverLoad*=.6;X.frozen=0}
+    if(c==='ice')A.swell=Math.max(0,A.swell-35);if(c==='air')A.stamina=Math.min(A.stamMax,A.stamina+A.stamMax*.15);if(c==='cut')A.bleed=0;
+    if(c==='talk')A.resolve=Math.min(100,A.resolve+12+popB*.3);
+    if(B.swell>40)B.swell-=20;
+    closeModal();F.round++;F.clock=0;F.range=2;F.kdRound={A:0,B:0};F.rs=newRS();F.oppActsRound={};
+    flog(`Round ${F.round}.`,'d');banner(`ROUND ${F.round}`);nextSecond()});
+}
+function decision(){
+  const F=FX;const tot=[0,1,2].map(j=>F.cards.reduce((s,c)=>[s[0]+c[j][0],s[1]+c[j][1]],[0,0]));
+  let wa=0,wb=0;tot.forEach(t=>{if(t[0]>t[1])wa++;else if(t[1]>t[0])wb++});
+  const method=wa>=2?(wb?'Split decision':'Unanimous decision'):wb>=2?(wa?'Split decision':'Unanimous decision'):'Draw';
+  endFight(wa>=2?'A':wb>=2?'B':'D',method,tot);
+}
+function endFight(winner,method,tot){
+  const F=FX;if(F.phase==='end')return;F.phase='end';F.winner=winner;closeModal();updateHUD();
+  const p=S.p,A=F.A,o=F.o;
+  const won=winner==='A',ko=/KO/.test(method);
+  if(won){p.record.w++;if(ko)p.record.ko++}else if(winner==='B')p.record.l++;else p.record.d++;
+  let purse=o.purse*(won?1:.6)*(1-(p._fine||0));purse=Math.round(purse);p.money+=purse;
+  // persist damage into the body
+  for(const k in A.bone)if(k in p.body.skel)p.body.skel[k]=clamp(100-A.bone[k],5,100);
+  const inj=[];
+  if(A.bone.nose>40)inj.push({n:'Broken nose',part:'nose',days:21});
+  if(A.bone.orbital>45||A.swell>70)inj.push({n:'Orbital bruising',part:'orbital',days:A.bone.orbital>60?35:12});
+  if(A.bone.ribs>45)inj.push({n:'Cracked ribs',part:'ribs',days:28});
+  if(A.bone.handL>55)inj.push({n:'Broken left hand',part:'hand',days:42});
+  if(A.bone.handR>55)inj.push({n:'Broken right hand',part:'hand',days:42});
+  if(A.bone.jaw>50)inj.push({n:'Jaw fracture',part:'jaw',days:42});
+  const conc=A.shockTotal>90||(winner==='B'&&ko);
+  if(conc)inj.push({n:'Concussion',part:'brain',days:winner==='B'&&ko?28:14});
+  const perm=A.shockTotal*.035+(winner==='B'&&ko?4:0);
+  p.body.organs.brain=clamp(p.body.organs.brain-perm,10,100);p.body.organs.brainCap=clamp(p.body.organs.brainCap-perm*.5,30,100);
+  p.body.organs.liver=clamp(p.body.organs.liver-A.liverLoad*.15,30,100);
+  for(const i of inj)if(!p.injuries.some(x=>x.part===i.part))p.injuries.push(i);
+  p.fatigue=clamp(p.fatigue+35,0,100);
+  // relationships react
+  const lines=[];
+  if(won){p.rel.pop.bond+=8;lines.push(['Pop','"Don\'t get used to it." He is smiling with his whole face.'])}else lines.push(['Pop','He cuts your gloves off without a word. Then: "Again. We go again."']);
+  if(p.rel.mina.bond>50)lines.push(['Mina',won?'She is screaming your name from the cheap seats, standing on her chair.':'She holds the ice bag on your eye all night and doesn\'t say anything, which is worse.']);
+  else lines.push(['Mina','Her seat in the bleachers was empty. She said she had homework.']);
+  if(p.rel.rosa.bond>40)lines.push(['Rosa',`She shows you a page in the sketchbook. It's you in round ${Math.max(1,F.round-1)}, ${won?'arm raised':'getting up'}.`]);
+  if(p.rel.dex.bond>25)lines.push(['Dex',won?'A text from a number you don\'t have saved: "Lucky. See you soon, dockrat."':'Dex was ringside. He left before the decision.']);
+  p.rel.dex.bond+=won?8:2;
+  p.fightsDone++;p.lastFightWeek=p.week;p.fight=null;delete p._cut;delete p._fine;clampAll(p);
+  if(won&&!p.nick&&p.fightsDone===1)p.nick=A.resolve>60?'The Undertow':'Pier Road';
+  p.log.push({t:`FIGHT: ${won?'WIN':winner==='D'?'DRAW':'LOSS'} vs ${o.name} by ${method}. Purse $${purse}.`,c:won?'good':'bad'});
+  save();
+  setTimeout(()=>{
+    showModal(`<span class="speaker">${won?'WINNER':winner==='D'?'DRAW':'LOSS'} · ${esc(method.toUpperCase())}</span>
+     <h2>${won?esc(p.name)+(p.nick?' "'+esc(p.nick)+'"':''):winner==='D'?'Nobody':esc(o.name)}</h2>
+     ${F.cards.length?`<table class="score"><tr><th>Rd</th><th>J1</th><th>J2</th><th>J3</th></tr>${F.cards.map((c,i)=>`<tr><td>${i+1}</td>${c.map(x=>`<td>${x[0]}-${x[1]}</td>`).join('')}</tr>`).join('')}${tot?`<tr><td><b>Total</b></td>${tot.map(t=>`<td><b>${t[0]}-${t[1]}</b></td>`).join('')}</tr>`:''}</table>`:''}
+     <p class="mono">Purse: $${purse}. Record: ${p.record.w}-${p.record.l}-${p.record.d} (${p.record.ko} KO)</p>
+     ${inj.length?`<p style="color:var(--blood)">Injuries: ${inj.map(i=>i.n).join(', ')}.</p>`:'<p class="dim">You walk out of the ring under your own power.</p>'}
+     <p class="dim">Brain health now ${Math.round(p.body.organs.brain)}. Some of that never comes back.</p>
+     <div style="display:flex;flex-direction:column;gap:8px">${lines.map(([w,t])=>`<p><span class="speaker">${esc(w).toUpperCase()}</span><br>${esc(t)}</p>`).join('')}</div>
+     <button class="primary" id="m-ok">Back to life</button>`);
+    $('#m-ok').onclick=()=>{closeModal();FX=null;renderLife()};
+  },1500);
+}
+
+/* --- rendering loop for the ring --- */
+let crowd=null;
+function drawArena(g,t){
+  if(!crowd){crowd=document.createElement('canvas');crowd.width=320;crowd.height=180;const c=crowd.getContext('2d');
+    const gr=c.createLinearGradient(0,0,0,180);gr.addColorStop(0,'#0d0b14');gr.addColorStop(1,'#1d1726');c.fillStyle=gr;c.fillRect(0,0,320,180);
+    for(let row=0;row<5;row++)for(let x=-4;x<324;x+=7+Math.random()*3){const y=46+row*12+Math.random()*3;const col=['#2a2235','#241e2e','#30283c','#3a2f3f'][Math.floor(Math.random()*4)];pell(c,x,y,3,3,col);prect(c,x-4,y+3,9,7,col)}
+    for(let y=0;y<34;y+=2){c.globalAlpha=.05;c.fillStyle='#e7aa3d';c.fillRect(110-y*2,y,100+y*4,2)}c.globalAlpha=1;
+    prect(c,0,150,320,30,'#2c2738');prect(c,14,152,292,4,'#d9cfb6');prect(c,10,156,300,24,'#1b3a5c');
+    c.font='8px Silkscreen, monospace';c.fillStyle='#e7aa3d';c.fillText('RIVERSIDE ARMORY',112,170);
+    prect(c,14,86,4,70,'#8a8a96');prect(c,302,86,4,70,'#8a8a96');}
+  g.drawImage(crowd,0,0);
+  for(let i=0;i<3;i++){if(Math.random()<.02){const x=Math.random()*320,y=45+Math.random()*50;prect(g,x,y,2,2,'#fff')}}
+  const ry=[98,114,130],rc=['#c8372d','#ece3cf','#c8372d'];
+  for(let i=0;i<3;i++)prect(g,16,ry[i]+Math.sin(t*1.3+i)*.5,288,2,rc[i]);
+}
+function lerpPose(a,b,t){const o={};for(const k of new Set([...Object.keys(a),...Object.keys(b)])){const x=a[k],y=b[k];
+  if(Array.isArray(x)&&Array.isArray(y))o[k]=[lerp(x[0],y[0],t),lerp(x[1],y[1],t)];else if(typeof x==='number'||typeof y==='number')o[k]=lerp(x||0,y||0,t);else o[k]=t<.5?x:y}return o}
+function resolvePunch(P,me,face,opp,ext){
+  if(!P.ext||!opp._head)return P;
+  const q=Object.assign({},P);const tgt=P.to==='body'?opp._body:opp._head;const hand=P.ext;
+  const sh=me._sh||[0,0];const base=[sh[0]+face*(hand==='L'?3:-2)+face*P[hand][0],sh[1]+P[hand][1]];
+  let tx=tgt[0],ty=tgt[1];
+  if(P.arc==='upper')ty+=lerp(14,0,ext);if(P.arc==='over')ty-=Math.sin(ext*Math.PI)*9;if(P.arc==='hook')ty-=Math.sin(ext*Math.PI)*3;
+  q[hand+'w']=[lerp(base[0],tx,ext),lerp(base[1],ty,ext)];
+  if(P.arc==='hook'&&hand==='L')q.upL=true;if(P.arc==='hook'&&hand==='R')q.upR=true;
+  return q;
+}
+function fightLoop(now){
+  const F=FX;if(!F||S.screen!=='fight')return;
+  const cv=$('#ring');if(!cv)return;const g=cv.getContext('2d');
+  const target=[30,44,60][F.range];F.dist=lerp(F.dist,target,.15);
+  let sx=0,sy=0;if(F.shake>0){sx=(Math.random()-.5)*F.shake;sy=(Math.random()-.5)*F.shake;F.shake*=.85;if(F.shake<.3)F.shake=0}
+  g.save();g.translate(Math.round(sx),Math.round(sy));
+  drawArena(g,now/1000);
+  let t=1;if(F.anim)t=clamp((now-F.anim.t0)/ANIM,0,1);
+  const ext=t<.35?t/.35:t<.55?1:Math.max(0,1-(t-.55)/.45);
+  const blend=clamp(t/.22,0,1);
+  const xa=160-F.dist/2,xb=160+F.dist/2;
+  const pose=id=>{let P=lerpPose(F.prevPoses[id],F.poses[id],blend);
+    if(F.anim&&F.anim.ex){const h=F.anim.ex.hits.find(h=>h.def===id&&h.res==='hit');if(h&&t>.38){const k=Math.min(1,(t-.38)/.1)*(1-Math.max(0,(t-.6)/.4));const big=clamp(h.dmg/10,.4,1.6);
+      if(TECH[h.tech].target==='head'){P.hdx=(P.hdx||0)-4*big*k;P.hdy=(P.hdy||0)-1*k}else{P.crouch=(P.crouch||0)+4*big*k;P.lean=(P.lean||0)+2*k}}}
+    if(F.phase==='kd'&&F.downed===id)P={down:true};
+    if(F.phase==='end'){if(F.winner===id)P=SPOSE.win;else if(F.winner&&F.winner!=='D'&&F.downed===id)P={down:true}}
+    if(F.phase==='choose'||!F.anim){P=Object.assign({},P,{crouch:(P.crouch||0)+Math.sin(now/180+(id==='A'?0:1.7))*.8})}
+    return P};
+  const PA=pose('A'),PB=pose('B');
+  const vis=X=>({swell:X.swell,bleed:X.bleed,ribs:X.bone.ribs,liver:X.liverLoad/X.liverMax*40,flash:F.flash[X===F.A?'A':'B']});
+  // draw back-most first: both, then punches resolved with previous anchors
+  drawBoxer(g,F.B,xb,-1,resolvePunch(PB,F.B,-1,F.A,ext),vis(F.B));
+  drawBoxer(g,F.A,xa,1,resolvePunch(PA,F.A,1,F.B,ext),vis(F.A));
+  // effects
+  if(F.anim&&!F.anim.fired&&t>.4){F.anim.fired=true;
+    for(const h of F.anim.ex.hits){const Y=F[h.def];const pt=TECH[h.tech].target==='body'?Y._body:Y._head;if(!pt)continue;
+      if(h.res==='hit'){F.fx.push({k:'star',x:pt[0],y:pt[1],t0:now,big:h.dmg});F.fx.push({k:'txt',x:pt[0],y:pt[1]-12,t0:now,s:h.counter?pick(['KRAK!','GOOOSH!','BAM!!']):TECH[h.tech].target==='body'?pick(['DOSS','THUD','DOMF']):pick(['WHAP','BAK','POW']),c:h.counter?'#e7aa3d':'#fff'});
+        F.shake=Math.min(6,h.dmg*.45+(h.counter?2:0));F.flash[h.def]=.9;
+        if(h.region==='nose'||Y.bleed)for(let i=0;i<5;i++)F.fx.push({k:'drop',x:pt[0],y:pt[1],vx:(Math.random()-.5)*2-(h.def==='A'?1:-1),vy:-Math.random()*2,t0:now,c:'#c2241c'});
+        for(let i=0;i<4;i++)F.fx.push({k:'drop',x:pt[0],y:pt[1]-2,vx:(Math.random()-.5)*2.5,vy:-Math.random()*2.5,t0:now,c:'#cfe3ff'});
+        if(h.counter){F.fx.push({k:'lines',t0:now})}}
+      else if(h.res==='blocked'){F.fx.push({k:'txt',x:pt[0],y:pt[1]-8,t0:now,s:'tak',c:'#a49cb2'})}
+      else if(h.res==='miss'){F.fx.push({k:'txt',x:pt[0],y:pt[1]-10,t0:now,s:'fwip',c:'#6b6280'})}}
+    drawXray();}
+  for(const id of['A','B'])F.flash[id]=Math.max(0,F.flash[id]-.08);
+  F.fx=F.fx.filter(e=>now-e.t0<700);
+  for(const e of F.fx){const a=(now-e.t0)/700;
+    if(e.k==='star'){const r=3+a*8+Math.min(6,e.big*.3);g.globalAlpha=1-a;for(let i=0;i<8;i++){const an=i*Math.PI/4+.3;pline(g,e.x+Math.cos(an)*r*.4,e.y+Math.sin(an)*r*.4,e.x+Math.cos(an)*r,e.y+Math.sin(an)*r,1,i%2?'#e7aa3d':'#fff')}g.globalAlpha=1}
+    else if(e.k==='txt'){g.globalAlpha=1-a*a;g.font='8px Silkscreen, monospace';g.lineWidth=2;g.strokeStyle='#15131d';const w=g.measureText(e.s).width;g.strokeText(e.s,e.x-w/2,e.y-a*8);g.fillStyle=e.c;g.fillText(e.s,e.x-w/2,e.y-a*8);g.globalAlpha=1}
+    else if(e.k==='drop'){const dt=(now-e.t0)/40;prect(g,e.x+e.vx*dt,e.y+e.vy*dt+.08*dt*dt,1,1,e.c)}
+    else if(e.k==='lines'){g.globalAlpha=(1-a)*.5;for(let i=0;i<24;i++){const an=i/24*Math.PI*2;pline(g,160+Math.cos(an)*120,90+Math.sin(an)*90,160+Math.cos(an)*200,90+Math.sin(an)*150,1,'#fff')}g.globalAlpha=1}}
+  if(F.flashScreen>0){g.globalAlpha=F.flashScreen*.7;g.fillStyle='#fff';g.fillRect(0,0,320,180);g.globalAlpha=1;F.flashScreen-=.05}
+  g.restore();
+  requestAnimationFrame(fightLoop);
+}
+
+/* ---------------------------- BOOT ---------------------------- */
+window.__cot={S,TECH,computeExchange,poseOf,hitTest,fighterFromPlayer,fighterFromOpp,newPlayer,aiChoose,get FX(){return FX},startFight,submit,renderLife,liveWeek,oppData};
+renderTitle();
+</script>
